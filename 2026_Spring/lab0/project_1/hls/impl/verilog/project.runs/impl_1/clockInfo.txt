@@ -1,0 +1,10 @@
+-------------------------------------
+| Tool Version : Vivado v.2025.1.1
+| Date         : Thu Jan 22 16:12:40 2026
+| Host         : ece-linlabsrv01
+| Design       : checkpoint_bd_0_wrapper
+| Device       : xczu3eg-sbva484-1-E-
+-------------------------------------
+
+For more information on clockInfo.txt clock routing debug file see https://support.xilinx.com/s/article/000035660?language=en_US
+

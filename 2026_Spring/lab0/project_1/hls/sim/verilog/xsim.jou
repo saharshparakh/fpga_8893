@@ -1,0 +1,25 @@
+#-----------------------------------------------------------
+# xsim v2025.1.1 (64-bit)
+# SW Build 6233196 on Thu Sep 11 21:27:11 MDT 2025
+# IP Build 6232796 on Fri Sep 12 01:46:16 MDT 2025
+# SharedData Build 6233195 on Thu Sep 11 17:56:43 MDT 2025
+# Start of session at: Thu Jan 22 16:05:07 2026
+# Process ID         : 2777571
+# Current directory  : /nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/sim/verilog
+# Command line       : xsim -mode tcl -source {xsim.dir/top_kernel/xsim_script.tcl}
+# Log file           : /nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/sim/verilog/xsim.log
+# Journal file       : /nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/sim/verilog/xsim.jou
+# Running On         : ece-linlabsrv01
+# Platform           : RedHatEnterprise
+# Operating System   : Red Hat Enterprise Linux release 8.10 (Ootpa)
+# Processor Detail   : Intel(R) Xeon(R) Gold 5117 CPU @ 2.00GHz
+# CPU Frequency      : 2800.000 MHz
+# CPU Physical cores : 56
+# CPU Logical cores  : 112
+# Host memory        : 201166 MB
+# Swap memory        : 68719 MB
+# Total Virtual      : 269885 MB
+# Available Virtual  : 214909 MB
+#-----------------------------------------------------------
+source xsim.dir/top_kernel/xsim_script.tcl
+source top_kernel.tcl

@@ -1,0 +1,232 @@
+<ENTRY>
+{
+ "thisFile": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/project_1.hlsrun_impl_summary",
+ "connectId": "",
+ "serverToken": "",
+ "timestamp": "0"
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_CmdStep",
+ "dateTimestamp": "Thu Jan 22 16:05:21 2026",
+ "timestampMillis": "1769115921490",
+ "buildStep": {
+  "cmdId": "293aee88-6493-4793-8ea5-acbf8675653f",
+  "name": "vitis-run",
+  "logFile": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/logs/hls_compile.log",
+  "commandLine": "vitis-run --mode hls --tcl /nethome/sparakh7/fpga_8893/2026_Spring/lab0/script.tcl",
+  "args": [],
+  "iniFiles": [],
+  "cwd": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0"
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Status",
+ "dateTimestamp": "Thu Jan 22 16:05:21 2026",
+ "timestampMillis": "1769115921491",
+ "status": {
+  "cmdId": "293aee88-6493-4793-8ea5-acbf8675653f",
+  "state": "CS_RUNNING"
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_FlowMetaData",
+ "dateTimestamp": "Thu Jan 22 16:05:21 2026",
+ "timestampMillis": "1769115921491",
+ "buildSummary": {
+  "hardwarePlatform": "",
+  "hardwareDsa": "",
+  "platformDirectory": "",
+  "runtime": "",
+  "systemConfig": "",
+  "flow": "BF_RUN",
+  "target": "TT_HLS_IMPL",
+  "kernels": [
+   {
+    "base": {
+     "type": "KERNEL",
+     "name": "top_kernel",
+     "file": "",
+     "reports": [],
+     "uuid": ""
+    },
+    "sources": [
+     "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/top.cpp"
+    ],
+    "psSources": [],
+    "cuNames": [],
+    "type": "HLS",
+    "frequency": 0,
+    "freqUnits": ""
+   }
+  ],
+  "toolVersion": "2025.1"
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_SubCmdStep",
+ "dateTimestamp": "Thu Jan 22 16:05:21 2026",
+ "timestampMillis": "1769115921492",
+ "buildStep": {
+  "cmdId": "cad5a19e-30be-4566-b2d2-aad92a9398fd",
+  "name": "export_design",
+  "logFile": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/hls.log",
+  "commandLine": "export_design",
+  "args": [],
+  "iniFiles": [],
+  "cwd": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0"
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Status",
+ "dateTimestamp": "Thu Jan 22 16:05:21 2026",
+ "timestampMillis": "1769115921492",
+ "status": {
+  "cmdId": "cad5a19e-30be-4566-b2d2-aad92a9398fd",
+  "state": "CS_RUNNING"
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Report",
+ "dateTimestamp": "Thu Jan 22 16:05:21 2026",
+ "timestampMillis": "1769115921495",
+ "report": {
+  "path": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog",
+  "name": "",
+  "fileType": "DIR",
+  "reportType": "HLS_RTL_SYNTHESIS",
+  "cmdId": ""
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Report",
+ "dateTimestamp": "Thu Jan 22 16:05:21 2026",
+ "timestampMillis": "1769115921496",
+ "report": {
+  "path": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/report/verilog/export_syn.rpt",
+  "name": "",
+  "fileType": "TEXT",
+  "reportType": "HLS_RTL_SYNTHESIS",
+  "cmdId": ""
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Report",
+ "dateTimestamp": "Thu Jan 22 16:05:21 2026",
+ "timestampMillis": "1769115921496",
+ "report": {
+  "path": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/report/verilog/export_syn.xml",
+  "name": "",
+  "fileType": "XML",
+  "reportType": "HLS_RTL_SYNTHESIS",
+  "cmdId": ""
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Report",
+ "dateTimestamp": "Thu Jan 22 16:05:21 2026",
+ "timestampMillis": "1769115921497",
+ "report": {
+  "path": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog",
+  "name": "",
+  "fileType": "DIR",
+  "reportType": "HLS_PLACE_AND_ROUTE",
+  "cmdId": ""
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Report",
+ "dateTimestamp": "Thu Jan 22 16:05:21 2026",
+ "timestampMillis": "1769115921497",
+ "report": {
+  "path": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/report/verilog/export_impl.rpt",
+  "name": "",
+  "fileType": "TEXT",
+  "reportType": "HLS_PLACE_AND_ROUTE",
+  "cmdId": ""
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Report",
+ "dateTimestamp": "Thu Jan 22 16:05:21 2026",
+ "timestampMillis": "1769115921498",
+ "report": {
+  "path": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/report/verilog/export_impl.xml",
+  "name": "",
+  "fileType": "XML",
+  "reportType": "HLS_PLACE_AND_ROUTE",
+  "cmdId": ""
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Report",
+ "dateTimestamp": "Thu Jan 22 16:14:54 2026",
+ "timestampMillis": "1769116494853",
+ "report": {
+  "path": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls",
+  "name": "",
+  "fileType": "DIR",
+  "reportType": "HLS_RTL_SYNTHESIS",
+  "cmdId": ""
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Report",
+ "dateTimestamp": "Thu Jan 22 16:14:54 2026",
+ "timestampMillis": "1769116494854",
+ "report": {
+  "path": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls",
+  "name": "",
+  "fileType": "DIR",
+  "reportType": "HLS_PLACE_AND_ROUTE",
+  "cmdId": ""
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Status",
+ "dateTimestamp": "Thu Jan 22 16:14:54 2026",
+ "timestampMillis": "1769116494854",
+ "status": {
+  "cmdId": "cad5a19e-30be-4566-b2d2-aad92a9398fd",
+  "state": "CS_PASSED"
+ }
+}
+</ENTRY>
+<ENTRY>
+{
+ "type": "ET_Status",
+ "dateTimestamp": "Thu Jan 22 16:14:54 2026",
+ "timestampMillis": "1769116494873",
+ "status": {
+  "cmdId": "293aee88-6493-4793-8ea5-acbf8675653f",
+  "state": "CS_PASSED"
+ }
+}
+</ENTRY>

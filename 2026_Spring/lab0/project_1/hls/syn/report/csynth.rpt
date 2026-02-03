@@ -1,0 +1,171 @@
+
+
+================================================================
+== Synthesis Summary Report of 'top_kernel'
+================================================================
++ General Information: 
+    * Date:           Thu Jan 22 16:04:11 2026
+    * Version:        2025.1.1 (Build 6214317 on Sep 11 2025)
+    * Project:        project_1
+    * Solution:       hls (Vivado IP Flow Target)
+    * Product family: zynquplus
+    * Target device:  xczu3eg-sbva484-1-e
+    
+
++ Performance & Resource Estimates: 
+    
+    PS: '+' for module; 'o' for loop; '*' for dataflow
+    +--------------------+------+------+---------+-----------+----------+---------+------+----------+---------+---------+-----------+-----------+-----+
+    |       Modules      | Issue|      |       Latency       | Iteration|         | Trip |          |         |         |           |           |     |
+    |       & Loops      | Type | Slack| (cycles)|    (ns)   |  Latency | Interval| Count| Pipelined|  BRAM   |   DSP   |     FF    |    LUT    | URAM|
+    +--------------------+------+------+---------+-----------+----------+---------+------+----------+---------+---------+-----------+-----------+-----+
+    |+ top_kernel        |     -|  0.00|      117|  1.170e+03|         -|      100|     -|    rewind|  4 (~0%)|  3 (~0%)|  2722 (1%)|  2627 (3%)|    -|
+    | o VITIS_LOOP_11_1  |     -|  7.30|      115|  1.150e+03|        17|        1|   100|       yes|        -|        -|          -|          -|    -|
+    +--------------------+------+------+---------+-----------+----------+---------+------+----------+---------+---------+-----------+-----------+-----+
+
+
+================================================================
+== HW Interfaces
+================================================================
+* M_AXI
++-----------+------------+------------+---------------+---------+--------+----------+-----------+--------------+--------------+-------------+-------------+-------------------+
+| Interface | Read/Write | Data Width | Address Width | Latency | Offset | Register | Max Widen | Max Read     | Max Write    | Num Read    | Num Write   | Resource Estimate |
+|           |            | (SW->HW)   |               |         |        |          | Bitwidth  | Burst Length | Burst Length | Outstanding | Outstanding |                   |
++-----------+------------+------------+---------------+---------+--------+----------+-----------+--------------+--------------+-------------+-------------+-------------------+
+| m_axi_a   | READ_ONLY  | 32 -> 32   | 64            | 0       | slave  | 0        | 0         | 16           | 16           | 16          | 16          | BRAM=2            |
+| m_axi_b   | READ_ONLY  | 32 -> 32   | 64            | 0       | slave  | 0        | 0         | 16           | 16           | 16          | 16          | BRAM=2            |
+| m_axi_sum | WRITE_ONLY | 32 -> 32   | 64            | 0       | slave  | 0        | 0         | 16           | 16           | 16          | 16          |                   |
++-----------+------------+------------+---------------+---------+--------+----------+-----------+--------------+--------------+-------------+-------------+-------------------+
+
+* S_AXILITE Interfaces
++---------------+------------+---------------+--------+----------+
+| Interface     | Data Width | Address Width | Offset | Register |
++---------------+------------+---------------+--------+----------+
+| s_axi_control | 32         | 6             | 16     | 0        |
++---------------+------------+---------------+--------+----------+
+
+* S_AXILITE Registers
++---------------+----------+--------+-------+--------+----------------------------------+----------------------------------------------------------------------+
+| Interface     | Register | Offset | Width | Access | Description                      | Bit Fields                                                           |
++---------------+----------+--------+-------+--------+----------------------------------+----------------------------------------------------------------------+
+| s_axi_control | CTRL     | 0x00   | 32    | RW     | Control signals                  | 0=AP_START 1=AP_DONE 2=AP_IDLE 3=AP_READY 7=AUTO_RESTART 9=INTERRUPT |
+| s_axi_control | GIER     | 0x04   | 32    | RW     | Global Interrupt Enable Register | 0=Enable                                                             |
+| s_axi_control | IP_IER   | 0x08   | 32    | RW     | IP Interrupt Enable Register     | 0=CHAN0_INT_EN 1=CHAN1_INT_EN                                        |
+| s_axi_control | IP_ISR   | 0x0c   | 32    | RW     | IP Interrupt Status Register     | 0=CHAN0_INT_ST 1=CHAN1_INT_ST                                        |
+| s_axi_control | a_r_1    | 0x10   | 32    | W      | Data signal of a_r               |                                                                      |
+| s_axi_control | a_r_2    | 0x14   | 32    | W      | Data signal of a_r               |                                                                      |
+| s_axi_control | b_r_1    | 0x1c   | 32    | W      | Data signal of b_r               |                                                                      |
+| s_axi_control | b_r_2    | 0x20   | 32    | W      | Data signal of b_r               |                                                                      |
+| s_axi_control | sum_r_1  | 0x28   | 32    | W      | Data signal of sum_r             |                                                                      |
+| s_axi_control | sum_r_2  | 0x2c   | 32    | W      | Data signal of sum_r             |                                                                      |
++---------------+----------+--------+-------+--------+----------------------------------+----------------------------------------------------------------------+
+
+* TOP LEVEL CONTROL
++-----------+------------+-----------+
+| Interface | Type       | Ports     |
++-----------+------------+-----------+
+| ap_clk    | clock      | ap_clk    |
+| ap_rst_n  | reset      | ap_rst_n  |
+| interrupt | interrupt  | interrupt |
+| ap_ctrl   | ap_ctrl_hs |           |
++-----------+------------+-----------+
+
+
+================================================================
+== SW I/O Information
+================================================================
+* Top Function Arguments
++----------+-----------+----------+
+| Argument | Direction | Datatype |
++----------+-----------+----------+
+| a        | in        | int*     |
+| b        | in        | int*     |
+| sum      | out       | int*     |
++----------+-----------+----------+
+
+* SW-to-HW Mapping
++----------+---------------+-----------+----------+-----------------------------------+
+| Argument | HW Interface  | HW Type   | HW Usage | HW Info                           |
++----------+---------------+-----------+----------+-----------------------------------+
+| a        | m_axi_a       | interface |          | channel=0                         |
+| a        | s_axi_control | register  | offset   | name=a_r_1 offset=0x10 range=32   |
+| a        | s_axi_control | register  | offset   | name=a_r_2 offset=0x14 range=32   |
+| b        | m_axi_b       | interface |          | channel=0                         |
+| b        | s_axi_control | register  | offset   | name=b_r_1 offset=0x1c range=32   |
+| b        | s_axi_control | register  | offset   | name=b_r_2 offset=0x20 range=32   |
+| sum      | m_axi_sum     | interface |          | channel=0                         |
+| sum      | s_axi_control | register  | offset   | name=sum_r_1 offset=0x28 range=32 |
+| sum      | s_axi_control | register  | offset   | name=sum_r_2 offset=0x2c range=32 |
++----------+---------------+-----------+----------+-----------------------------------+
+
+
+================================================================
+== M_AXI Burst Information
+================================================================
+ Note: All burst requests might be further partitioned into multiple requests during RTL generation based on max_read_burst_length or max_write_burst_length settings.
+
+* Inferred Burst Summary
++--------------+-----------+--------+-------+-----------------+---------------+
+| HW Interface | Direction | Length | Width | Loop            | Loop Location |
++--------------+-----------+--------+-------+-----------------+---------------+
+| m_axi_a      | read      | 100    | 32    | VITIS_LOOP_11_1 | top.cpp:11:19 |
+| m_axi_b      | read      | 100    | 32    | VITIS_LOOP_11_1 | top.cpp:11:19 |
+| m_axi_sum    | write     | 100    | 32    | VITIS_LOOP_11_1 | top.cpp:11:19 |
++--------------+-----------+--------+-------+-----------------+---------------+
+
+* All M_AXI Variable Accesses
++--------------+----------+-----------------+-----------+--------------+--------+-----------------+---------------+------------+-------------------------------------------------------------------------------------------------------+
+| HW Interface | Variable | Access Location | Direction | Burst Status | Length | Loop            | Loop Location | Resolution | Problem                                                                                               |
++--------------+----------+-----------------+-----------+--------------+--------+-----------------+---------------+------------+-------------------------------------------------------------------------------------------------------+
+| m_axi_a      | a        | top.cpp:12:12   | read      | Widen Fail   |        | VITIS_LOOP_11_1 | top.cpp:11:19 | 214-353    | Could not widen since type i32 size is greater than or equal to the max_widen_bitwidth threshold of 0 |
+| m_axi_a      | a        | top.cpp:12:12   | read      | Inferred     | 100    | VITIS_LOOP_11_1 | top.cpp:11:19 |            |                                                                                                       |
+| m_axi_b      | b        | top.cpp:12:19   | read      | Widen Fail   |        | VITIS_LOOP_11_1 | top.cpp:11:19 | 214-353    | Could not widen since type i32 size is greater than or equal to the max_widen_bitwidth threshold of 0 |
+| m_axi_b      | b        | top.cpp:12:19   | read      | Inferred     | 100    | VITIS_LOOP_11_1 | top.cpp:11:19 |            |                                                                                                       |
+| m_axi_sum    | sum      | top.cpp:12:10   | write     | Widen Fail   |        | VITIS_LOOP_11_1 | top.cpp:11:19 | 214-353    | Could not widen since type i32 size is greater than or equal to the max_widen_bitwidth threshold of 0 |
+| m_axi_sum    | sum      | top.cpp:12:10   | write     | Inferred     | 100    | VITIS_LOOP_11_1 | top.cpp:11:19 |            |                                                                                                       |
++--------------+----------+-----------------+-----------+--------------+--------+-----------------+---------------+------------+-------------------------------------------------------------------------------------------------------+
+
+    * Resolution URL: docs.xilinx.com/access/sources/dita/topic?Doc_Version=2025.1%20English&url=ug1448-hls-guidance&resourceid=XXX-YYY.html (replace XXX-YYY with column value)
+
+================================================================
+== Bind Op Report
+================================================================
++-------------------------+-----+--------+-----------+-------+--------+---------+
+| Name                    | DSP | Pragma | Variable  | Op    | Impl   | Latency |
++-------------------------+-----+--------+-----------+-------+--------+---------+
+| + top_kernel            | 3   |        |           |       |        |         |
+|   mul_32s_32s_32_1_1_U1 | 3   |        | mul_ln12  | mul   | auto   | 0       |
+|   i_fu_184_p2           |     |        | i         | add   | fabric | 0       |
+|   icmp_ln11_fu_190_p2   |     |        | icmp_ln11 | seteq | auto   | 0       |
++-------------------------+-----+--------+-----------+-------+--------+---------+
+
+
+================================================================
+== Storage Report
+================================================================
++-------------------+-----------+-----------+------+------+--------+----------+------+---------+------------------+
+| Name              | Usage     | Type      | BRAM | URAM | Pragma | Variable | Impl | Latency | Bitwidth, Depth, |
+|                   |           |           |      |      |        |          |      |         | Banks            |
++-------------------+-----------+-----------+------+------+--------+----------+------+---------+------------------+
+| + top_kernel      |           |           | 4    | 0    |        |          |      |         |                  |
+|   control_s_axi_U | interface | s_axilite |      |      |        |          |      |         |                  |
+|   a_m_axi_U       | interface | m_axi     | 2    |      |        |          |      |         |                  |
+|   b_m_axi_U       | interface | m_axi     | 2    |      |        |          |      |         |                  |
+|   sum_m_axi_U     | interface | m_axi     |      |      |        |          |      |         |                  |
++-------------------+-----------+-----------+------+------+--------+----------+------+---------+------------------+
+
+
+================================================================
+== Pragma Report
+================================================================
+* Valid Pragma Syntax
++-----------+----------------------------------------+---------------------------------+
+| Type      | Options                                | Location                        |
++-----------+----------------------------------------+---------------------------------+
+| INTERFACE | m_axi port=a offset=slave bundle=a     | top.cpp:5 in top_kernel, a      |
+| INTERFACE | m_axi port=b offset=slave bundle=b     | top.cpp:6 in top_kernel, b      |
+| INTERFACE | m_axi port=sum offset=slave bundle=sum | top.cpp:7 in top_kernel, sum    |
+| INTERFACE | s_axilite port=return                  | top.cpp:8 in top_kernel, return |
++-----------+----------------------------------------+---------------------------------+
+
+

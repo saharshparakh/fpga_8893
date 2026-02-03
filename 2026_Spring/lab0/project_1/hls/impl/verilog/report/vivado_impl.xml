@@ -1,0 +1,111 @@
+<profile>
+<RunData>
+  <RUN_TYPE>impl</RUN_TYPE>
+  <VIVADO_VERSION>v.2025.1.1</VIVADO_VERSION>
+  <ROOT_MODULE_CELL>bd_0_i/hls_inst</ROOT_MODULE_CELL>
+</RunData>
+<TimingReport>
+  <TargetClockPeriod>10.000</TargetClockPeriod>
+  <AchievedClockPeriod>2.845</AchievedClockPeriod>
+  <CLOCK_NAME>ap_clk</CLOCK_NAME>
+  <CP_FINAL>2.845</CP_FINAL>
+  <CP_ROUTE>2.845</CP_ROUTE>
+  <CP_SYNTH>2.779</CP_SYNTH>
+  <CP_TARGET>10.000</CP_TARGET>
+  <SLACK_FINAL>7.155</SLACK_FINAL>
+  <SLACK_ROUTE>7.155</SLACK_ROUTE>
+  <SLACK_SYNTH>7.221</SLACK_SYNTH>
+  <TIMING_MET>TRUE</TIMING_MET>
+  <TNS_FINAL>0.000</TNS_FINAL>
+  <TNS_ROUTE>0.000</TNS_ROUTE>
+  <TNS_SYNTH>0.000</TNS_SYNTH>
+  <WNS_FINAL>7.155</WNS_FINAL>
+  <WNS_ROUTE>7.155</WNS_ROUTE>
+  <WNS_SYNTH>7.221</WNS_SYNTH>
+</TimingReport>
+<AreaReport>
+  <Resources>
+    <BRAM>2</BRAM>
+    <CLB>472</CLB>
+    <DSP>3</DSP>
+    <FF>3019</FF>
+    <LATCH>0</LATCH>
+    <LUT>1906</LUT>
+    <SRL>216</SRL>
+    <URAM>0</URAM>
+  </Resources>
+  <AvailableResources>
+    <BRAM>432</BRAM>
+    <CLB>8820</CLB>
+    <DSP>360</DSP>
+    <FF>141120</FF>
+    <LUT>70560</LUT>
+    <URAM>0</URAM>
+  </AvailableResources>
+</AreaReport>
+<RtlModules>
+  <RtlModule CELL="inst" DEPTH="0" FILE_NAME="bd_0_hls_inst_0.v" ORIG_REF_NAME="top_kernel" TOP_CELL="bd_0_i/hls_inst/inst">
+    <SubModules count="6">a_m_axi_U b_m_axi_U control_s_axi_U flow_control_loop_pipe_U mul_32s_32s_32_1_1_U1 sum_m_axi_U</SubModules>
+    <Resources BRAM="2" DSP="3" FF="3019" LUT="1906" LogicLUT="1690" RAMB18="2" SRL="216"/>
+    <LocalResources DSP="1" FF="232" LUT="37" SRL="37"/>
+  </RtlModule>
+  <RtlModule CELL="inst/a_m_axi_U" DEPTH="1" FILE_NAME="top_kernel.v" ORIG_REF_NAME="top_kernel_a_m_axi">
+    <Resources BRAM="1" FF="756" LUT="470" LogicLUT="435" RAMB18="1" SRL="35"/>
+  </RtlModule>
+  <RtlModule CELL="inst/b_m_axi_U" DEPTH="1" FILE_NAME="top_kernel.v" ORIG_REF_NAME="top_kernel_b_m_axi">
+    <Resources BRAM="1" FF="756" LUT="477" LogicLUT="442" RAMB18="1" SRL="35"/>
+  </RtlModule>
+  <RtlModule CELL="inst/control_s_axi_U" DEPTH="1" FILE_NAME="top_kernel.v" ORIG_REF_NAME="top_kernel_control_s_axi">
+    <Resources FF="245" LUT="229" LogicLUT="229"/>
+  </RtlModule>
+  <RtlModule CELL="inst/flow_control_loop_pipe_U" DEPTH="1" FILE_NAME="top_kernel.v" ORIG_REF_NAME="top_kernel_flow_control_loop_pipe">
+  </RtlModule>
+  <RtlModule CELL="inst/mul_32s_32s_32_1_1_U1" DEPTH="1" FILE_NAME="top_kernel.v" ORIG_REF_NAME="top_kernel_mul_32s_32s_32_1_1">
+  </RtlModule>
+  <RtlModule CELL="inst/sum_m_axi_U" DEPTH="1" FILE_NAME="top_kernel.v" ORIG_REF_NAME="top_kernel_sum_m_axi">
+    <Resources FF="1029" LUT="675" LogicLUT="566" SRL="109"/>
+  </RtlModule>
+</RtlModules>
+<TimingPaths>
+  <TPATH DATAPATH_DELAY="2.756" DATAPATH_LOGIC_DELAY="0.384" DATAPATH_NET_DELAY="2.372" ENDPOINT_PIN="bd_0_i/hls_inst/inst/a_r_read_reg_278_reg[36]/CE" LOGIC_LEVELS="2" MAX_FANOUT="296" SLACK="7.155" STARTPOINT_PIN="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/full_n_reg/C">
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/full_n_reg" PRIMITIVE_TYPE="REGISTER.SDR.FDSE" FILE_NAME="top_kernel_b_m_axi.v" LINE_NUMBER="2176"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/mem_reg[30][0]_srl31_i_3" PRIMITIVE_TYPE="CLB.LUT.LUT4" FILE_NAME="top_kernel_flow_control_loop_pipe.v" LINE_NUMBER="69"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/ap_enable_reg_pp0_iter1_i_1" PRIMITIVE_TYPE="CLB.LUT.LUT5" FILE_NAME="top_kernel_flow_control_loop_pipe.v" LINE_NUMBER="69"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/a_r_read_reg_278_reg[36]" PRIMITIVE_TYPE="REGISTER.SDR.FDRE" FILE_NAME="top_kernel.v" LINE_NUMBER="1122"/>
+  </TPATH>
+  <TPATH DATAPATH_DELAY="2.756" DATAPATH_LOGIC_DELAY="0.384" DATAPATH_NET_DELAY="2.372" ENDPOINT_PIN="bd_0_i/hls_inst/inst/a_r_read_reg_278_reg[40]/CE" LOGIC_LEVELS="2" MAX_FANOUT="296" SLACK="7.155" STARTPOINT_PIN="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/full_n_reg/C">
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/full_n_reg" PRIMITIVE_TYPE="REGISTER.SDR.FDSE" FILE_NAME="top_kernel_b_m_axi.v" LINE_NUMBER="2176"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/mem_reg[30][0]_srl31_i_3" PRIMITIVE_TYPE="CLB.LUT.LUT4" FILE_NAME="top_kernel_flow_control_loop_pipe.v" LINE_NUMBER="69"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/ap_enable_reg_pp0_iter1_i_1" PRIMITIVE_TYPE="CLB.LUT.LUT5" FILE_NAME="top_kernel_flow_control_loop_pipe.v" LINE_NUMBER="69"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/a_r_read_reg_278_reg[40]" PRIMITIVE_TYPE="REGISTER.SDR.FDRE" FILE_NAME="top_kernel.v" LINE_NUMBER="1122"/>
+  </TPATH>
+  <TPATH DATAPATH_DELAY="2.756" DATAPATH_LOGIC_DELAY="0.384" DATAPATH_NET_DELAY="2.372" ENDPOINT_PIN="bd_0_i/hls_inst/inst/a_r_read_reg_278_reg[46]/CE" LOGIC_LEVELS="2" MAX_FANOUT="296" SLACK="7.155" STARTPOINT_PIN="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/full_n_reg/C">
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/full_n_reg" PRIMITIVE_TYPE="REGISTER.SDR.FDSE" FILE_NAME="top_kernel_b_m_axi.v" LINE_NUMBER="2176"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/mem_reg[30][0]_srl31_i_3" PRIMITIVE_TYPE="CLB.LUT.LUT4" FILE_NAME="top_kernel_flow_control_loop_pipe.v" LINE_NUMBER="69"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/ap_enable_reg_pp0_iter1_i_1" PRIMITIVE_TYPE="CLB.LUT.LUT5" FILE_NAME="top_kernel_flow_control_loop_pipe.v" LINE_NUMBER="69"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/a_r_read_reg_278_reg[46]" PRIMITIVE_TYPE="REGISTER.SDR.FDRE" FILE_NAME="top_kernel.v" LINE_NUMBER="1122"/>
+  </TPATH>
+  <TPATH DATAPATH_DELAY="2.756" DATAPATH_LOGIC_DELAY="0.384" DATAPATH_NET_DELAY="2.372" ENDPOINT_PIN="bd_0_i/hls_inst/inst/a_r_read_reg_278_reg[48]/CE" LOGIC_LEVELS="2" MAX_FANOUT="296" SLACK="7.155" STARTPOINT_PIN="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/full_n_reg/C">
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/full_n_reg" PRIMITIVE_TYPE="REGISTER.SDR.FDSE" FILE_NAME="top_kernel_b_m_axi.v" LINE_NUMBER="2176"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/mem_reg[30][0]_srl31_i_3" PRIMITIVE_TYPE="CLB.LUT.LUT4" FILE_NAME="top_kernel_flow_control_loop_pipe.v" LINE_NUMBER="69"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/ap_enable_reg_pp0_iter1_i_1" PRIMITIVE_TYPE="CLB.LUT.LUT5" FILE_NAME="top_kernel_flow_control_loop_pipe.v" LINE_NUMBER="69"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/a_r_read_reg_278_reg[48]" PRIMITIVE_TYPE="REGISTER.SDR.FDRE" FILE_NAME="top_kernel.v" LINE_NUMBER="1122"/>
+  </TPATH>
+  <TPATH DATAPATH_DELAY="2.757" DATAPATH_LOGIC_DELAY="0.384" DATAPATH_NET_DELAY="2.373" ENDPOINT_PIN="bd_0_i/hls_inst/inst/a_r_read_reg_278_reg[38]/CE" LOGIC_LEVELS="2" MAX_FANOUT="296" SLACK="7.155" STARTPOINT_PIN="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/full_n_reg/C">
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/full_n_reg" PRIMITIVE_TYPE="REGISTER.SDR.FDSE" FILE_NAME="top_kernel_b_m_axi.v" LINE_NUMBER="2176"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/mem_reg[30][0]_srl31_i_3" PRIMITIVE_TYPE="CLB.LUT.LUT4" FILE_NAME="top_kernel_flow_control_loop_pipe.v" LINE_NUMBER="69"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/b_m_axi_U/load_unit_0/fifo_rreq/ap_enable_reg_pp0_iter1_i_1" PRIMITIVE_TYPE="CLB.LUT.LUT5" FILE_NAME="top_kernel_flow_control_loop_pipe.v" LINE_NUMBER="69"/>
+    <CELL NAME="bd_0_i/hls_inst/inst/a_r_read_reg_278_reg[38]" PRIMITIVE_TYPE="REGISTER.SDR.FDRE" FILE_NAME="top_kernel.v" LINE_NUMBER="1122"/>
+  </TPATH>
+</TimingPaths>
+<VivadoReportFiles>
+  <ReportFile TYPE="design_analysis" PATH="verilog/report/top_kernel_design_analysis_routed.rpt"/>
+  <ReportFile TYPE="failfast" PATH="verilog/report/top_kernel_failfast_routed.rpt"/>
+  <ReportFile TYPE="power" PATH="verilog/report/top_kernel_power_routed.rpt"/>
+  <ReportFile TYPE="status" PATH="verilog/report/top_kernel_status_routed.rpt"/>
+  <ReportFile TYPE="timing" PATH="verilog/report/top_kernel_timing_routed.rpt"/>
+  <ReportFile TYPE="timing_paths" PATH="verilog/report/top_kernel_timing_paths_routed.rpt"/>
+  <ReportFile TYPE="utilization" PATH="verilog/report/top_kernel_utilization_routed.rpt"/>
+  <ReportFile TYPE="utilization_hierarchical" PATH="verilog/report/top_kernel_utilization_hierarchical_routed.rpt"/>
+</VivadoReportFiles>
+</profile>

@@ -1,0 +1,23 @@
+[
+  {
+    "functionLabel": "",
+    "functionName": "top_kernel",
+    "id": 0,
+    "ifcond": "",
+    "insert_position": "",
+    "label": "",
+    "pragma": {
+      "name": "TOP",
+      "option": [
+        {
+          "name": "name",
+          "value": "top_kernel"
+        }
+      ]
+    },
+    "slx": false,
+    "sourceFile": "/nethome/sparakh7/fpga_8893/2026_Spring/lab0/script.tcl",
+    "sourceLine": 19,
+    "success": true
+  }
+]

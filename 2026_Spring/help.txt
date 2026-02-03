@@ -1,0 +1,3 @@
+Source vitis:
+source /tools/software/xilinx/setup_env.sh
+source /tools/software/xilinx/latest/Vitis/settings64.sh

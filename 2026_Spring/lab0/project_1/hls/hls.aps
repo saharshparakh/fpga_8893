@@ -1,0 +1,30 @@
+<AutoPilot:solution xmlns:AutoPilot="com.autoesl.autopilot.solution">
+    <name>
+        <value string="hls"/>
+    </name>
+    <project>
+        <value string="project_1"/>
+    </project>
+    <flowTarget value="vivado"/>
+    <writeConfigIni value="1"/>
+    <isComponent value="1"/>
+    <targetInfo>
+        <TargetInfo value="xczu3eg:-sbva484:-1-e"/>
+    </targetInfo>
+    <libraryList>
+        <library value="xilinx/zynquplus/zynquplus" name="DefaultPlatform"/>
+    </libraryList>
+    <clockList>
+        <clock name="default" period="10ns" default="false"/>
+    </clockList>
+    <Simulation argv="">
+        <SimFlow name="cosim" setup="false" dumpTrace="none" optimizeCompile="false" ldflags="" mflags="" compiledLibrary="" toolName="xsim">
+            <Rtl name="verilog" active="true"/>
+            <Rtl name="vhdl" active="false"/>
+        </SimFlow>
+    </Simulation>
+    <config>
+        <config_export flow="impl" format="ip_catalog"/>
+    </config>
+</AutoPilot:solution>
+

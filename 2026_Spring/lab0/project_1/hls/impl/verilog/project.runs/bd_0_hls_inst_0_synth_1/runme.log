@@ -1,0 +1,780 @@
+
+*** Running vivado
+    with args -log bd_0_hls_inst_0.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source bd_0_hls_inst_0.tcl
+
+
+****** Vivado v2025.1.1 (64-bit)
+  **** SW Build 6233196 on Thu Sep 11 21:27:11 MDT 2025
+  **** IP Build 6232796 on Fri Sep 12 01:46:16 MDT 2025
+  **** SharedData Build 6233195 on Thu Sep 11 17:56:43 MDT 2025
+  **** Start of session at: Thu Jan 22 16:06:27 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source bd_0_hls_inst_0.tcl -notrace
+INFO: Dispatch client connection id - 46507
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1700] Loaded user IP repository '/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/ip'.
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/tools/software/xilinx/2025.1.1/data/ip'.
+Command: synth_design -top bd_0_hls_inst_0 -part xczu3eg-sbva484-1-e -directive sdx_optimization_effort_high -incremental_mode off -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xczu3eg'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xczu3eg'
+INFO: [Device 21-403] Loading part xczu3eg-sbva484-1-e
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 2791404
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 79461 ; free virtual = 203470
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'bd_0_hls_inst_0' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ip/bd_0_hls_inst_0/synth/bd_0_hls_inst_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel.v:9]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_control_s_axi' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_control_s_axi.v:9]
+INFO: [Synth 8-155] case statement is not full and has no default [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_control_s_axi.v:227]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_control_s_axi' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_control_s_axi.v:9]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:9]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_load' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:284]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_fifo' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2101]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_srl' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2314]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_srl' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2314]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_fifo' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2101]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_fifo__parameterized0' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2101]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_mem' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2354]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_mem' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2354]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_fifo__parameterized0' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2101]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_load' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:284]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_read' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:782]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_fifo__parameterized1' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2101]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_srl__parameterized0' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2314]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_srl__parameterized0' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2314]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_fifo__parameterized1' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:2101]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_burst_converter' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:1036]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_burst_sequential' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:1642]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_reg_slice' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:1997]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_reg_slice' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:1997]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_burst_sequential' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:1642]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_burst_converter' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:1036]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_a_m_axi_reg_slice__parameterized0' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:1997]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_reg_slice__parameterized0' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:1997]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi_read' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:782]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_a_m_axi' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_a_m_axi.v:9]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:9]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_load' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:284]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_fifo' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2101]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_srl' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2314]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_srl' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2314]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_fifo' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2101]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_fifo__parameterized0' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2101]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_mem' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2354]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_mem' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2354]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_fifo__parameterized0' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2101]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_load' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:284]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_read' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:782]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_fifo__parameterized1' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2101]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_srl__parameterized0' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2314]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_srl__parameterized0' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2314]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_fifo__parameterized1' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:2101]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_burst_converter' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:1036]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_burst_sequential' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:1642]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_reg_slice' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:1997]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_reg_slice' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:1997]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_burst_sequential' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:1642]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_burst_converter' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:1036]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_b_m_axi_reg_slice__parameterized0' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:1997]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_reg_slice__parameterized0' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:1997]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi_read' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:782]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_b_m_axi' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_b_m_axi.v:9]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:9]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_store' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:318]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_fifo' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_srl' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_srl' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_fifo' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_fifo__parameterized0' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_srl__parameterized0' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_srl__parameterized0' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_fifo__parameterized0' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_fifo__parameterized1' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_srl__parameterized1' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_srl__parameterized1' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_fifo__parameterized1' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_fifo__parameterized2' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_srl__parameterized2' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_srl__parameterized2' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_fifo__parameterized2' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_fifo__parameterized3' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_srl__parameterized3' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_srl__parameterized3' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_fifo__parameterized3' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_store' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:318]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_write' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:1099]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_burst_converter' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:1394]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_burst_sequential' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2000]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_reg_slice' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2622]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_reg_slice' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2622]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_burst_sequential' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2000]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_burst_converter' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:1394]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_throttle' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2353]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_fifo__parameterized4' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_srl__parameterized4' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_srl__parameterized4' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2939]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_fifo__parameterized4' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2726]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_reg_slice__parameterized0' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2622]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_reg_slice__parameterized0' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2622]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_reg_slice__parameterized1' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2622]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_reg_slice__parameterized1' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2622]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_throttle' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2353]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_sum_m_axi_reg_slice__parameterized2' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2622]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_reg_slice__parameterized2' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2622]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi_write' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:1099]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_sum_m_axi' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:9]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_mul_32s_32s_32_1_1' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_mul_32s_32s_32_1_1.v:5]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_mul_32s_32s_32_1_1' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_mul_32s_32s_32_1_1.v:5]
+INFO: [Synth 8-6157] synthesizing module 'top_kernel_flow_control_loop_pipe' [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_flow_control_loop_pipe.v:11]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel_flow_control_loop_pipe' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_flow_control_loop_pipe.v:11]
+INFO: [Synth 8-6155] done synthesizing module 'top_kernel' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel.v:9]
+INFO: [Synth 8-6155] done synthesizing module 'bd_0_hls_inst_0' (0#1) [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ip/bd_0_hls_inst_0/synth/bd_0_hls_inst_0.v:53]
+WARNING: [Synth 8-6014] Unused sequential element int_ap_done_reg was removed.  [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_control_s_axi.v:305]
+WARNING: [Synth 8-7129] Port ap_done_int in module top_kernel_flow_control_loop_pipe is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BURST_AWLEN[7] in module top_kernel_sum_m_axi_throttle is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BURST_AWLEN[6] in module top_kernel_sum_m_axi_throttle is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BURST_AWLEN[5] in module top_kernel_sum_m_axi_throttle is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BURST_AWLEN[4] in module top_kernel_sum_m_axi_throttle is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BURST_AWLEN[3] in module top_kernel_sum_m_axi_throttle is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BURST_AWLEN[2] in module top_kernel_sum_m_axi_throttle is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BURST_AWLEN[1] in module top_kernel_sum_m_axi_throttle is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BURST_AWLEN[0] in module top_kernel_sum_m_axi_throttle is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BUS_BID[0] in module top_kernel_sum_m_axi_write is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BUS_BRESP[1] in module top_kernel_sum_m_axi_write is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BUS_BRESP[0] in module top_kernel_sum_m_axi_write is either unconnected or has no load
+WARNING: [Synth 8-7129] Port in_BUS_BUSER[0] in module top_kernel_sum_m_axi_write is either unconnected or has no load
+WARNING: [Synth 8-7129] Port ARREADY in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RID[0] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[31] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[30] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[29] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[28] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[27] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[26] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[25] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[24] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[23] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[22] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[21] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[20] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[19] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[18] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[17] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[16] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[15] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[14] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[13] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[12] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[11] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[10] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[9] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[8] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[7] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[6] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[5] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[4] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[3] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[2] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[1] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RDATA[0] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RRESP[1] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RRESP[0] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RLAST in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RUSER[0] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port RVALID in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[63] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[62] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[61] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[60] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[59] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[58] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[57] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[56] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[55] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[54] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[53] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[52] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[51] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[50] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[49] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[48] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[47] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[46] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[45] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[44] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[43] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[42] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[41] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[40] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[39] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[38] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[37] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[36] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[35] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[34] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[33] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[32] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[31] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[30] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[29] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[28] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[27] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[26] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[25] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[24] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[23] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[22] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[21] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[20] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[19] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[18] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[17] in module top_kernel_sum_m_axi is either unconnected or has no load
+WARNING: [Synth 8-7129] Port I_CH0_ARADDR[16] in module top_kernel_sum_m_axi is either unconnected or has no load
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:09 ; elapsed = 00:00:10 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 79204 ; free virtual = 203215
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 79198 ; free virtual = 203208
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 79198 ; free virtual = 203208
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.12 ; elapsed = 00:00:00.13 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 79359 ; free virtual = 203370
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ip/bd_0_hls_inst_0/constraints/top_kernel_ooc.xdc] for cell 'inst'
+create_clock: Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78807 ; free virtual = 202819
+Finished Parsing XDC File [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ip/bd_0_hls_inst_0/constraints/top_kernel_ooc.xdc] for cell 'inst'
+Parsing XDC File [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.runs/bd_0_hls_inst_0_synth_1/dont_touch.xdc]
+Finished Parsing XDC File [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.runs/bd_0_hls_inst_0_synth_1/dont_touch.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78800 ; free virtual = 202812
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.25 ; elapsed = 00:00:00.13 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78787 ; free virtual = 202799
+INFO: [Designutils 20-5008] Incremental synthesis strategy off
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:28 ; elapsed = 00:00:29 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78184 ; free virtual = 202195
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xczu3eg-sbva484-1-e
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:28 ; elapsed = 00:00:29 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78182 ; free virtual = 202195
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:28 ; elapsed = 00:00:29 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78178 ; free virtual = 202191
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'wstate_reg' in module 'top_kernel_control_s_axi'
+INFO: [Synth 8-802] inferred FSM for state register 'rstate_reg' in module 'top_kernel_control_s_axi'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'top_kernel_a_m_axi_reg_slice'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'top_kernel_a_m_axi_reg_slice__parameterized0'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'top_kernel_b_m_axi_reg_slice'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'top_kernel_b_m_axi_reg_slice__parameterized0'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'top_kernel_sum_m_axi_reg_slice'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'top_kernel_sum_m_axi_reg_slice__parameterized0'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'top_kernel_sum_m_axi_reg_slice__parameterized1'
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg' in module 'top_kernel_sum_m_axi_reg_slice__parameterized2'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                  iSTATE |                             0001 |                               11
+*
+                  WRIDLE |                             0010 |                               00
+                  WRDATA |                             0100 |                               01
+                  WRRESP |                             1000 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'wstate_reg' using encoding 'one-hot' in module 'top_kernel_control_s_axi'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                  iSTATE |                              001 |                               10
+*
+                  RDIDLE |                              010 |                               00
+                  RDDATA |                              100 |                               01
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'rstate_reg' using encoding 'one-hot' in module 'top_kernel_control_s_axi'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    ZERO |                               00 |                               10
+                     ONE |                               10 |                               11
+                     TWO |                               01 |                               01
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'top_kernel_a_m_axi_reg_slice'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    ZERO |                               00 |                               10
+                     ONE |                               10 |                               11
+                     TWO |                               01 |                               01
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'top_kernel_a_m_axi_reg_slice__parameterized0'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    ZERO |                               00 |                               10
+                     ONE |                               10 |                               11
+                     TWO |                               01 |                               01
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'top_kernel_b_m_axi_reg_slice'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    ZERO |                               00 |                               10
+                     ONE |                               10 |                               11
+                     TWO |                               01 |                               01
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'top_kernel_b_m_axi_reg_slice__parameterized0'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    ZERO |                               00 |                               10
+                     ONE |                               10 |                               11
+                     TWO |                               01 |                               01
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'top_kernel_sum_m_axi_reg_slice'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    ZERO |                               00 |                               10
+                     ONE |                               10 |                               11
+                     TWO |                               01 |                               01
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'top_kernel_sum_m_axi_reg_slice__parameterized0'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    ZERO |                               00 |                               10
+                     ONE |                               10 |                               11
+                     TWO |                               01 |                               01
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'top_kernel_sum_m_axi_reg_slice__parameterized1'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    ZERO |                               00 |                               10
+                     ONE |                               10 |                               11
+                     TWO |                               01 |                               01
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg' using encoding 'sequential' in module 'top_kernel_sum_m_axi_reg_slice__parameterized2'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:30 ; elapsed = 00:00:31 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78335 ; free virtual = 202351
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   52 Bit       Adders := 3     
+	   2 Input   32 Bit       Adders := 6     
+	   2 Input   12 Bit       Adders := 6     
+	   2 Input    9 Bit       Adders := 4     
+	   3 Input    9 Bit       Adders := 1     
+	   2 Input    8 Bit       Adders := 5     
+	   3 Input    8 Bit       Adders := 1     
+	   2 Input    7 Bit       Adders := 1     
+	   2 Input    6 Bit       Adders := 5     
+	   2 Input    5 Bit       Adders := 20    
+	   2 Input    4 Bit       Adders := 12    
+	   2 Input    3 Bit       Adders := 12    
+	   2 Input    2 Bit       Adders := 4     
++---XORs : 
+	   2 Input      1 Bit         XORs := 2     
++---Registers : 
+	               97 Bit    Registers := 6     
+	               96 Bit    Registers := 3     
+	               73 Bit    Registers := 2     
+	               64 Bit    Registers := 22    
+	               52 Bit    Registers := 3     
+	               36 Bit    Registers := 1     
+	               34 Bit    Registers := 6     
+	               32 Bit    Registers := 14    
+	               20 Bit    Registers := 3     
+	               10 Bit    Registers := 12    
+	                9 Bit    Registers := 9     
+	                8 Bit    Registers := 11    
+	                7 Bit    Registers := 1     
+	                6 Bit    Registers := 6     
+	                5 Bit    Registers := 17    
+	                4 Bit    Registers := 13    
+	                3 Bit    Registers := 6     
+	                2 Bit    Registers := 11    
+	                1 Bit    Registers := 176   
++---Multipliers : 
+	              32x32  Multipliers := 1     
++---RAMs : 
+	               8K Bit	(255 X 34 bit)          RAMs := 2     
++---Muxes : 
+	   2 Input   97 Bit        Muxes := 3     
+	   2 Input   73 Bit        Muxes := 1     
+	   2 Input   64 Bit        Muxes := 9     
+	   2 Input   52 Bit        Muxes := 3     
+	   2 Input   34 Bit        Muxes := 2     
+	   2 Input   32 Bit        Muxes := 2     
+	   2 Input   20 Bit        Muxes := 3     
+	   4 Input   12 Bit        Muxes := 3     
+	   2 Input   10 Bit        Muxes := 9     
+	   2 Input    9 Bit        Muxes := 3     
+	   4 Input    9 Bit        Muxes := 3     
+	   4 Input    8 Bit        Muxes := 5     
+	   2 Input    6 Bit        Muxes := 4     
+	   2 Input    5 Bit        Muxes := 8     
+	   4 Input    4 Bit        Muxes := 1     
+	   2 Input    4 Bit        Muxes := 10    
+	   3 Input    3 Bit        Muxes := 1     
+	   2 Input    3 Bit        Muxes := 10    
+	   2 Input    2 Bit        Muxes := 123   
+	   3 Input    2 Bit        Muxes := 24    
+	   4 Input    2 Bit        Muxes := 8     
+	   2 Input    1 Bit        Muxes := 157   
+	   4 Input    1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 360 (col length:72)
+BRAMs: 432 (col length: RAMB18 72 RAMB36 36)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7080] Parallel synthesis criteria is not met
+WARNING: [Synth 8-3936] Found unconnected internal register 'bus_write/wreq_throttle/rs_req/data_p1_reg' and it is trimmed from '73' to '72' bits. [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2655]
+WARNING: [Synth 8-3936] Found unconnected internal register 'bus_write/wreq_throttle/rs_req/data_p2_reg' and it is trimmed from '73' to '72' bits. [/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.gen/sources_1/bd/bd_0/ipshared/1704/hdl/verilog/top_kernel_sum_m_axi.v:2676]
+DSP Report: Generating DSP mul_32s_32s_32_1_1_U1/tmp_product, operation Mode is: A2*B.
+DSP Report: register mul_32s_32s_32_1_1_U1/tmp_product is absorbed into DSP mul_32s_32s_32_1_1_U1/tmp_product.
+DSP Report: operator mul_32s_32s_32_1_1_U1/tmp_product is absorbed into DSP mul_32s_32s_32_1_1_U1/tmp_product.
+DSP Report: operator mul_32s_32s_32_1_1_U1/tmp_product is absorbed into DSP mul_32s_32s_32_1_1_U1/tmp_product.
+DSP Report: Generating DSP mul_ln12_reg_315_reg, operation Mode is: (PCIN>>17)+A*B.
+DSP Report: register mul_ln12_reg_315_reg is absorbed into DSP mul_ln12_reg_315_reg.
+DSP Report: operator mul_32s_32s_32_1_1_U1/tmp_product is absorbed into DSP mul_ln12_reg_315_reg.
+DSP Report: operator mul_32s_32s_32_1_1_U1/tmp_product is absorbed into DSP mul_ln12_reg_315_reg.
+DSP Report: Generating DSP mul_32s_32s_32_1_1_U1/tmp_product, operation Mode is: A2*B2.
+DSP Report: register mul_32s_32s_32_1_1_U1/tmp_product is absorbed into DSP mul_32s_32s_32_1_1_U1/tmp_product.
+DSP Report: register mul_32s_32s_32_1_1_U1/tmp_product is absorbed into DSP mul_32s_32s_32_1_1_U1/tmp_product.
+DSP Report: operator mul_32s_32s_32_1_1_U1/tmp_product is absorbed into DSP mul_32s_32s_32_1_1_U1/tmp_product.
+DSP Report: operator mul_32s_32s_32_1_1_U1/tmp_product is absorbed into DSP mul_32s_32s_32_1_1_U1/tmp_product.
+DSP Report: Generating DSP mul_ln12_reg_315_reg, operation Mode is: (PCIN>>17)+A2*B.
+DSP Report: register mul_ln12_reg_315_reg is absorbed into DSP mul_ln12_reg_315_reg.
+DSP Report: register mul_ln12_reg_315_reg is absorbed into DSP mul_ln12_reg_315_reg.
+DSP Report: operator mul_32s_32s_32_1_1_U1/tmp_product is absorbed into DSP mul_ln12_reg_315_reg.
+DSP Report: operator mul_32s_32s_32_1_1_U1/tmp_product is absorbed into DSP mul_ln12_reg_315_reg.
+WARNING: [Synth 8-3332] Sequential element (FSM_onehot_wstate_reg[0]) is unused and will be removed from module top_kernel_control_s_axi.
+WARNING: [Synth 8-3332] Sequential element (FSM_onehot_rstate_reg[0]) is unused and will be removed from module top_kernel_control_s_axi.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[47]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[46]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[45]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[44]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[43]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[42]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[41]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[40]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[39]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[38]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[37]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[36]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[35]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[34]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[33]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[32]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[31]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[30]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[29]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[28]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[27]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[26]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[25]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[24]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[23]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[22]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[21]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[20]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[19]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[18]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[17]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[16]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[15]) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[47]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[46]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[45]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[44]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[43]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[42]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[41]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[40]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[39]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[38]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[37]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[36]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[35]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[34]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[33]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[32]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[31]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[30]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[29]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[28]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[27]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[26]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[25]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[24]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[23]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[22]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[21]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[20]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[19]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[18]__0) is unused and will be removed from module top_kernel.
+WARNING: [Synth 8-3332] Sequential element (mul_ln12_reg_315_reg[17]__0) is unused and will be removed from module top_kernel.
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:46 ; elapsed = 00:00:48 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78010 ; free virtual = 202014
+---------------------------------------------------------------------------------
+ Sort Area is  mul_32s_32s_32_1_1_U1/tmp_product_0 : 0 0 : 3137 5856 : Used 1 time 0
+ Sort Area is  mul_32s_32s_32_1_1_U1/tmp_product_0 : 0 1 : 2719 5856 : Used 1 time 0
+ Sort Area is  mul_32s_32s_32_1_1_U1/tmp_product_3 : 0 0 : 2652 5185 : Used 1 time 0
+ Sort Area is  mul_32s_32s_32_1_1_U1/tmp_product_3 : 0 1 : 2533 5185 : Used 1 time 0
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Block RAM: Preliminary Mapping Report (see note below)
++---------------+-------------------------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|Module Name    | RTL Object                                | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | Ports driving FF | RAMB18 | RAMB36 | Cascade Heights | 
++---------------+-------------------------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|inst/a_m_axi_U | load_unit_0/buff_rdata/U_fifo_mem/mem_reg | 255 x 34(READ_FIRST)   | W |   | 255 x 34(WRITE_FIRST)  |   | R | Port A and B     | 1      | 0      |                 | 
+|inst/b_m_axi_U | load_unit_0/buff_rdata/U_fifo_mem/mem_reg | 255 x 34(READ_FIRST)   | W |   | 255 x 34(WRITE_FIRST)  |   | R | Port A and B     | 1      | 0      |                 | 
++---------------+-------------------------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+
+Note: The table above is a preliminary report that shows the Block RAMs at the current stage of the synthesis flow. Some Block RAMs may be reimplemented as non Block RAM primitives later in the synthesis flow. Multiple instantiated Block RAMs are reported only once. 
+
+DSP: Preliminary Mapping Report (see note below. The ' indicates corresponding REG is set)
++------------+-----------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name | DSP Mapping     | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++------------+-----------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|top_kernel  | A2*B            | 18     | 15     | -      | -      | 48     | 1    | 0    | -    | -    | -     | 0    | 0    | 
+|top_kernel  | (PCIN>>17)+A*B  | 15     | 15     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 1    | 
+|top_kernel  | A2*B2           | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|top_kernel  | (PCIN>>17)+A2*B | 18     | 15     | -      | -      | 48     | 1    | 0    | -    | -    | -     | 0    | 1    | 
++------------+-----------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+Note: The table above is a preliminary report that shows the DSPs inferred at the current stage of the synthesis flow. Some DSP may be reimplemented as non DSP primitives later in the synthesis flow. Multiple instantiated DSPs are reported only once.
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:01:00 ; elapsed = 00:01:03 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78896 ; free virtual = 202895
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:01:05 ; elapsed = 00:01:07 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78821 ; free virtual = 202824
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Block RAM: Final Mapping Report
++---------------+-------------------------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|Module Name    | RTL Object                                | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | Ports driving FF | RAMB18 | RAMB36 | Cascade Heights | 
++---------------+-------------------------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+|inst/a_m_axi_U | load_unit_0/buff_rdata/U_fifo_mem/mem_reg | 255 x 34(READ_FIRST)   | W |   | 255 x 34(WRITE_FIRST)  |   | R | Port A and B     | 1      | 0      |                 | 
+|inst/b_m_axi_U | load_unit_0/buff_rdata/U_fifo_mem/mem_reg | 255 x 34(READ_FIRST)   | W |   | 255 x 34(WRITE_FIRST)  |   | R | Port A and B     | 1      | 0      |                 | 
++---------------+-------------------------------------------+------------------------+---+---+------------------------+---+---+------------------+--------+--------+-----------------+
+
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+INFO: [Synth 8-7052] The timing for the instance inst/a_m_axi_U/load_unit_0/buff_rdata/U_fifo_mem/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance inst/b_m_axi_U/load_unit_0/buff_rdata/U_fifo_mem/mem_reg (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:01:07 ; elapsed = 00:01:10 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78756 ; free virtual = 202759
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:01:12 ; elapsed = 00:01:16 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78247 ; free virtual = 202209
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:01:12 ; elapsed = 00:01:16 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78246 ; free virtual = 202208
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:01:13 ; elapsed = 00:01:16 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78224 ; free virtual = 202187
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:01:13 ; elapsed = 00:01:16 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78189 ; free virtual = 202152
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:01:13 ; elapsed = 00:01:16 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78207 ; free virtual = 202175
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:01:13 ; elapsed = 00:01:16 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78203 ; free virtual = 202171
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Static Shift Register Report:
++------------+-------------------------------------------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+|Module Name | RTL Name                                  | Length | Width | Reset Signal | Pull out first Reg | Pull out last Reg | SRL16E | SRLC32E | 
++------------+-------------------------------------------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+|top_kernel  | first_iter_0_reg_160_pp0_iter9_reg_reg[0] | 9      | 1     | NO           | NO                 | YES               | 1      | 0       | 
+|top_kernel  | icmp_ln11_reg_283_pp0_iter15_reg_reg[0]   | 15     | 1     | NO           | NO                 | YES               | 1      | 0       | 
+|top_kernel  | sum_r_read_reg_268_pp0_iter9_reg_reg[63]  | 10     | 62    | NO           | NO                 | YES               | 62     | 0       | 
+|top_kernel  | ap_loop_exit_ready_pp0_iter15_reg_reg     | 15     | 1     | NO           | NO                 | YES               | 1      | 0       | 
++------------+-------------------------------------------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+
+
+Dynamic Shift Register Report:
++------------+-------------+--------+------------+--------+---------+--------+--------+--------+
+|Module Name | RTL Name    | Length | Data Width | SRL16E | SRLC32E | Mux F7 | Mux F8 | Mux F9 | 
++------------+-------------+--------+------------+--------+---------+--------+--------+--------+
+|dsrl        | mem_reg[5]  | 96     | 96         | 96     | 0       | 0      | 0      | 0      | 
+|dsrl__1     | mem_reg[14] | 1      | 1          | 1      | 0       | 0      | 0      | 0      | 
+|dsrl__2     | mem_reg[5]  | 96     | 96         | 96     | 0       | 0      | 0      | 0      | 
+|dsrl__3     | mem_reg[14] | 1      | 1          | 1      | 0       | 0      | 0      | 0      | 
+|dsrl__4     | mem_reg[14] | 8      | 8          | 8      | 0       | 0      | 0      | 0      | 
+|dsrl__5     | mem_reg[2]  | 96     | 96         | 96     | 0       | 0      | 0      | 0      | 
+|dsrl__6     | mem_reg[30] | 36     | 36         | 0      | 36      | 0      | 0      | 0      | 
+|dsrl__7     | mem_reg[14] | 1      | 1          | 1      | 0       | 0      | 0      | 0      | 
+|dsrl__8     | mem_reg[2]  | 1      | 1          | 1      | 0       | 0      | 0      | 0      | 
+|dsrl__9     | mem_reg[14] | 64     | 64         | 64     | 0       | 0      | 0      | 0      | 
++------------+-------------+--------+------------+--------+---------+--------+--------+--------+
+
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+DSP Final Report (the ' indicates corresponding REG is set)
++------------+------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name | DSP Mapping      | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++------------+------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|top_kernel  | (PCIN>>17+A*B')' | 0      | 18     | -      | -      | 48     | 0    | 1    | -    | -    | -     | 0    | 1    | 
+|top_kernel  | (A'*B')'         | 17     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|top_kernel  | A'*B'            | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
++------------+------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+----------------+------+
+|      |Cell            |Count |
++------+----------------+------+
+|1     |CARRY8          |    82|
+|2     |DSP_ALU         |     3|
+|3     |DSP_A_B_DATA    |     3|
+|4     |DSP_C_DATA      |     3|
+|5     |DSP_MULTIPLIER  |     3|
+|6     |DSP_M_DATA      |     3|
+|7     |DSP_OUTPUT      |     3|
+|9     |DSP_PREADD      |     3|
+|10    |DSP_PREADD_DATA |     3|
+|11    |LUT1            |    81|
+|12    |LUT2            |   210|
+|13    |LUT3            |   804|
+|14    |LUT4            |   497|
+|15    |LUT5            |   221|
+|16    |LUT6            |   339|
+|17    |RAMB18E2        |     2|
+|18    |SRL16E          |   330|
+|19    |SRLC32E         |    36|
+|20    |FDRE            |  2996|
+|21    |FDSE            |    23|
++------+----------------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:01:13 ; elapsed = 00:01:16 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78200 ; free virtual = 202168
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 504 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:01:03 ; elapsed = 00:01:06 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78165 ; free virtual = 202129
+Synthesis Optimization Complete : Time (s): cpu = 00:01:14 ; elapsed = 00:01:17 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78165 ; free virtual = 202129
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.08 ; elapsed = 00:00:00.08 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78286 ; free virtual = 202252
+INFO: [Netlist 29-17] Analyzing 85 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 78060 ; free virtual = 202052
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 3 instances were transformed.
+  DSP48E2 => DSP48E2 (DSP_ALU, DSP_A_B_DATA, DSP_C_DATA, DSP_MULTIPLIER, DSP_M_DATA, DSP_OUTPUT, DSP_PREADD, DSP_PREADD_DATA): 3 instances
+
+Synth Design complete | Checksum: 9b0fcb7
+INFO: [Common 17-83] Releasing license: Synthesis
+149 Infos, 170 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:01:27 ; elapsed = 00:01:27 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 77980 ; free virtual = 201977
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2711.889; main = 2625.827; forked = 207.116
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 5424.438; main = 3952.250; forked = 1598.234
+Write ShapeDB Complete: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.02 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 77967 ; free virtual = 201964
+INFO: [Common 17-1381] The checkpoint '/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.runs/bd_0_hls_inst_0_synth_1/bd_0_hls_inst_0.dcp' has been generated.
+INFO: [Coretcl 2-1648] Added synthesis output to IP cache for IP bd_0_hls_inst_0, cache-ID = 2c5013ef7d4340e2
+INFO: [Coretcl 2-1174] Renamed 55 cell refs.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.01 . Memory (MB): peak = 0.000 ; gain = 0.000 ; free physical = 77496 ; free virtual = 201569
+INFO: [Common 17-1381] The checkpoint '/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/impl/verilog/project.runs/bd_0_hls_inst_0_synth_1/bd_0_hls_inst_0.dcp' has been generated.
+INFO: [Vivado 12-24828] Executing command : report_utilization -file bd_0_hls_inst_0_utilization_synth.rpt -pb bd_0_hls_inst_0_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Thu Jan 22 16:08:10 2026...

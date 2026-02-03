@@ -1,0 +1,5 @@
+/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/.autopilot/db/top.pp.0.cpp:1020:2: warning: Added loop label VITIS_LOOP_11_1:   [xilinx-label-all-loops]
+ for(int i = 0; i < 100; i++) {
+ ^~~
+ VITIS_LOOP_11_1: 
+/nethome/sparakh7/fpga_8893/2026_Spring/lab0/project_1/hls/.autopilot/db/top.pp.0.cpp:1020:2: note: FIX-IT applied suggested code changes
