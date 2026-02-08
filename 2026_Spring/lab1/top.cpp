@@ -1,169 +1,191 @@
 #include "dcl.h"
-#include <ap_fixed.h>
+#include <hls_stream.h>
 
-// ----------------------------------------------------------------------
-// CONFIGURATION
-// Target: 30x Speedup -> We use Factor 16 Parallelism
-// ----------------------------------------------------------------------
-#define PAR 16
+/* #########################################################################
+    sparakh7: Custom functions to evetually pipeline the entire flow
+######################################################################### */
 
-// CRITICAL: Ensure data_t is fixed point in dcl.h
-// typedef ap_fixed<32, 16> data_t; 
-
-// ======================================================================
-// 1. Burst Read
-// ======================================================================
-void read_input(data_t A_DRAM[N_ROWS][N_COLS], data_t A_local[N_ROWS][N_COLS]) {
-    // Read sequentially to maximize AXI burst length
-    read_row: for (int i = 0; i < N_ROWS; i++) {
-        read_col: for (int j = 0; j < N_COLS; j++) {
-            #pragma HLS PIPELINE II=1
-            A_local[i][j] = A_DRAM[i][j];
+// Reads 64 elements 16 at a time
+void mem_read(ap_uint<512> *A_wide, data_t A[N_ROWS][N_COLS]) {
+    const int TOTAL = N_ROWS * N_COLS;   // 16384
+    const int WORDS = TOTAL / 16;        // 1024
+    for (int w = 0; w < WORDS; w++) {
+        #pragma HLS PIPELINE II=1
+        ap_uint<512> wide = A_wide[w];
+        for (int k = 0; k < 16; k++) {
+            #pragma HLS UNROLL
+            int idx = w * 16 + k;
+            int r = idx / N_COLS;
+            int c = idx % N_COLS;
+            ap_uint<32> bits = wide.range((k+1)*32 - 1, k*32);
+            data_t val;
+            val.range() = bits.range(23, 0); // Explicitly map the 24 bits of your type
+            A[r][c] = val;
         }
     }
 }
 
-// ======================================================================
-// 2. Row Normalization
-// Strategy: Process 16 Rows in parallel
-// ======================================================================
-void compute_row_norm(data_t A[N_ROWS][N_COLS], data_t tmp[N_ROWS][N_COLS]) {
-    
-    // Iterate over rows in blocks of 16
-    row_norm_outer: for (int i = 0; i < N_ROWS; i += PAR) {
-        #pragma HLS PIPELINE off 
-        // We do not pipeline the outer loop; we exploit spatial parallelism inside.
 
-        data_t row_sums[PAR];
-        #pragma HLS ARRAY_PARTITION variable=row_sums complete
+// Writes back to the memory using scaled row data from a stream. 16 elemts at a time.
+void mem_write(data_t C[N_ROWS][N_COLS], ap_uint<512> *C_wide) {
+    const int TOTAL = N_ROWS * N_COLS;   // 16384
+    const int WORDS = TOTAL / 16;        // 1024
 
-        // Step 1: Accumulate Sums for 16 rows concurrently
-        sum_loop: for (int j = 0; j < N_COLS; j++) {
-            #pragma HLS PIPELINE II=1
-            
-            // Unroll to create 16 parallel adders
-            sum_unroll: for (int k = 0; k < PAR; k++) {
-                #pragma HLS UNROLL
-                if (i + k < N_ROWS) {
-                    if (j == 0) row_sums[k] = 0; // Reset at start of row
-                    
-                    #pragma HLS BIND_OP variable=row_sums op=add impl=dsp
-                    row_sums[k] += A[i + k][j];
-                }
-            }
-        }
-
-        // Step 2: Normalize 16 rows concurrently
-        norm_loop: for (int j = 0; j < N_COLS; j++) {
-            #pragma HLS PIPELINE II=1
-            
-            norm_unroll: for (int k = 0; k < PAR; k++) {
-                #pragma HLS UNROLL
-                if (i + k < N_ROWS) {
-                    data_t denom = row_sums[k] + (data_t)1;
-                    
-                    // Fixed point division is expensive, but we have DSPs to spare.
-                    // This creates 16 parallel dividers/multipliers.
-                    #pragma HLS BIND_OP variable=tmp op=mul impl=dsp
-                    tmp[i + k][j] = A[i + k][j] / denom;
-                }
-            }
-        }
-    }
-}
-
-// ======================================================================
-// 3. Column Scaling
-// Strategy: Iterate Columns (Outer), Access 16 Rows (Inner) in parallel
-// ======================================================================
-void compute_col_scale(data_t tmp[N_ROWS][N_COLS], data_t C[N_ROWS][N_COLS]) {
-    
-    // Process one column at a time
-    col_scale_j: for (int j = 0; j < N_COLS; j++) {
-        #pragma HLS PIPELINE off
+    for (int w = 0; w < WORDS; w++) {
+        #pragma HLS PIPELINE II=1
+        ap_uint<512> wide;
         
-        data_t col_sum = 0;
+        for (int k = 0; k < 16; k++) {
+            #pragma HLS UNROLL
+            int idx = w * 16 + k;
+            int r = idx / N_COLS;
+            int c = idx % N_COLS;
+            
+            // Extract the internal bits of the fixed-point value
+            // We initialize a 32-bit container to ensure AXI alignment
+            ap_uint<32> bits = 0;
+            bits.range(23, 0) = C[r][c].range();
+            
+            // Pack into the 512-bit wide word
+            wide.range((k + 1) * 32 - 1, k * 32) = bits;
+        }
+        // Single 512-bit burst write
+        C_wide[w] = wide;
+    }
+}
 
-        // Step 1: Column Summation
-        // We stride through the column 16 rows at a time
-        col_sum_i: for (int i = 0; i < N_ROWS; i += PAR) {
-            #pragma HLS PIPELINE II=1
-            
-            data_t partial_sum = 0;
-            
-            // Because 'tmp' is partitioned cyclically, these 16 accesses 
-            // hit 16 different banks. No conflict.
-            sum_reduce: for (int k = 0; k < PAR; k++) {
-                #pragma HLS UNROLL
-                if (i + k < N_ROWS) {
-                    partial_sum += tmp[i + k][j];
-                }
-            }
-            #pragma HLS BIND_OP variable=col_sum op=add impl=dsp
-            col_sum += partial_sum;
+// Used for row normalization. Limits dividers to 8.
+void row_divider(data_t row_in[N_COLS], data_t row_out[N_COLS], data_t denom) {
+    #pragma HLS INLINE off
+    for (int j = 0; j < N_COLS; j++) {
+        #pragma HLS PIPELINE II=1
+        row_out[j] = row_in[j] / denom;
+        // We limit the number of dividers inside this specific function
+        #pragma HLS allocation limit=12 operation instances=sdiv
+
+    }
+}
+
+// Handle entire row normailization so it can be pipelined
+void row_normalization(data_t A[N_ROWS][N_COLS], data_t tmp[N_ROWS][N_COLS]) {
+    for (int i = 0; i < N_ROWS; i++) {
+        #pragma HLS PIPELINE II = 1
+        data_t row_sum = 0.0;
+
+        // Compute row sum
+        for (int j = 0; j < N_COLS; j++) {
+            //#pragma HLS UNROLL
+            #pragma HLS BIND_OP variable=row_sum op=add impl=dsp latency=2
+            row_sum += A[i][j];
         }
 
-        data_t scale = col_sum / (data_t)N_ROWS;
+        // Avoid division by zero, add small bias
+        data_t denom;
+        #pragma HLS BIND_OP variable=denom op=add impl=dsp
+        denom = row_sum + (data_t)1.0;
 
-        // Step 2: Apply Scale
-        col_write_i: for (int i = 0; i < N_ROWS; i += PAR) {
-            #pragma HLS PIPELINE II=1
-            
-            write_unroll: for (int k = 0; k < PAR; k++) {
-                #pragma HLS UNROLL
-                if (i + k < N_ROWS) {
-                    // 16 parallel writes to 'C' (which is also partitioned)
-                    #pragma HLS BIND_OP variable=C op=mul impl=dsp
-                    C[i + k][j] = tmp[i + k][j] * scale;
-                }
+        row_divider(A[i], tmp[i], denom);
+    }
+}
+
+// Used to accumulate the sum of each element in a column
+void col_accumulator(data_t tmp_buffer[N_ROWS][N_COLS], data_t col_sums[N_COLS]) {
+    #pragma HLS INLINE
+    // Calling it times the number of rows
+    for (int row_index = 0; row_index < N_ROWS; row_index++) {
+        #pragma HLS PIPELINE II=1
+        for (int j = 0; j < N_COLS; j++) {
+            #pragma HLS UNROLL factor = 16
+            // Proceed with normal accumulation
+            #pragma HLS BIND_OP variable=col_sums op=add impl=dsp
+            if (row_index == 0) {
+                // Initialize correctly
+                col_sums[j] = tmp_buffer[row_index][j]; 
+            } else {
+                col_sums[j] += tmp_buffer[row_index][j];
             }
         }
     }
 }
 
-// ======================================================================
-// 4. Burst Write
-// ======================================================================
-void write_output(data_t C_local[N_ROWS][N_COLS], data_t C_DRAM[N_ROWS][N_COLS]) {
-    write_row: for (int i = 0; i < N_ROWS; i++) {
-        write_col: for (int j = 0; j < N_COLS; j++) {
-            #pragma HLS PIPELINE II=1
-            C_DRAM[i][j] = C_local[i][j];
+// Used to calculate column scales to multiply each element by
+void col_scale_calc(data_t col_sums[N_COLS], data_t scales[N_COLS]) {
+    // Divide after rows accumulate
+    for (int j = 0; j < N_COLS; j++) {
+        #pragma HLS PIPELINE II=1
+        scales[j] = col_sums[j] / (data_t)N_ROWS;
+        #pragma HLS allocation limit=6 operation instances=fdiv
+    }
+}
+
+// Once the col math is done, scale by rows for efficient writeback.
+void scale_rows(data_t tmp[N_ROWS][N_COLS], data_t scales[N_COLS], data_t C[N_ROWS][N_COLS]) {
+    data_t val;
+    for (int i = 0; i < N_ROWS; i++) {
+        #pragma HLS PIPELINE II=1 
+        // Scale 1 row each cycle
+        for (int j = 0; j < N_COLS; j++) {
+            // 64 DSPs fire simultaneously
+            #pragma HLS_UNROLL factor = 16
+            #pragma HLS BIND_OP variable=val op=mul impl=dsp
+            val = tmp[i][j] * scales[j];
+            C[i][j] = val;
         }
     }
 }
 
-// ======================================================================
-// TOP LEVEL
-// ======================================================================
-void top_kernel(data_t A_DRAM[N_ROWS][N_COLS], data_t C_DRAM[N_ROWS][N_COLS]) {
-    #pragma HLS INTERFACE m_axi port=A_DRAM offset=slave bundle=gmem0 depth=N_ROWS*N_COLS
-    #pragma HLS INTERFACE m_axi port=C_DRAM offset=slave bundle=gmem1 depth=N_ROWS*N_COLS
+// Entire col scaling method
+void col_scaling(data_t tmp[N_ROWS][N_COLS], data_t C[N_ROWS][N_COLS]) {
+    data_t scales[N_COLS];
+    data_t col_sums[N_COLS];
+    #pragma HLS array_partition variable=scales complete
+    #pragma HLS array_partition variable=col_sums complete
+
+    // These MUST be sequential because scales depend on col_sums
+    col_accumulator(tmp, col_sums); // store the running sum of each column and eventual scale
+    col_scale_calc(col_sums, scales); // Calculate the scales  
+    scale_rows(tmp, scales, C);  // Scale rows 1 at a time
+}
+
+/* #########################################################################
+    sparakh7: Custom functions end
+######################################################################### */
+
+
+// Baseline implementation for HLS.
+// Students will optimize this (loops, memory access, etc.).
+void top_kernel(data_t A_DRAM[N_ROWS][N_COLS],
+                data_t C_DRAM[N_ROWS][N_COLS]) {
+    #pragma HLS INTERFACE m_axi port=A_DRAM bundle=gmem0 max_read_burst_length=64 num_read_outstanding=4
+    #pragma HLS INTERFACE m_axi port=C_DRAM bundle=gmem1 max_write_burst_length=64 num_read_outstanding=4
     #pragma HLS INTERFACE s_axilite port=return
 
-    // On-chip buffers
-    data_t A_local[N_ROWS][N_COLS];
-    data_t tmp_local[N_ROWS][N_COLS];
-    data_t C_local[N_ROWS][N_COLS];
+    // On-chip buffers for A_DRAM and C_DRAM
+    data_t C[N_ROWS][N_COLS];
+    data_t A[N_ROWS][N_COLS];
+    data_t tmp[N_ROWS][N_COLS];
+    
+    #pragma HLS array_partition variable=A complete dim=2
+    // #pragma HLS array_partition variable=C complete dim=2
+    #pragma HLS array_partition variable=tmp complete dim=2
 
-    // ------------------------------------------------------------------
-    // MEMORY PARTITIONING: FACTOR 16
-    // ------------------------------------------------------------------
-    // We partition by ROW (dim 1) cyclically.
-    // Bank 0 holds row 0, 16, 32...
-    // Bank 1 holds row 1, 17, 33...
-    // This allows simultaneous access to rows i, i+1, ... i+15.
-    #pragma HLS ARRAY_PARTITION variable=A_local   cyclic factor=16 dim=1
-    #pragma HLS ARRAY_PARTITION variable=tmp_local cyclic factor=16 dim=1
-    #pragma HLS ARRAY_PARTITION variable=C_local   cyclic factor=16 dim=1
+    #pragma HLS array_partition variable=A cyclic factor=16 dim=2
+    #pragma HLS array_partition variable=tmp cyclic factor=16 dim=2
+    #pragma HLS array_partition variable=C cyclic factor=16 dim=2
 
-    // ------------------------------------------------------------------
-    // TASK PARALLELISM
-    // ------------------------------------------------------------------
-    #pragma HLS DATAFLOW
+    // Create a dataflow to pipeline each function
+    #pragma HLS dataflow
 
-    read_input(A_DRAM, A_local);
-    compute_row_norm(A_local, tmp_local);
-    compute_col_scale(tmp_local, C_local);
-    write_output(C_local, C_DRAM);
+    // Read from DRAM
+    mem_read((ap_uint<512> *)A_DRAM, A);
+
+    // Phase 1: Row-wise normalization
+    row_normalization(A, tmp);
+
+    // Phase 2: Column-wise scaling
+    col_scaling(tmp, C);
+
+    // Write to DRAM
+    mem_write(C, (ap_uint<512> *)C_DRAM);
+
 }
