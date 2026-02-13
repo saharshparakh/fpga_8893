@@ -6,51 +6,26 @@
 ######################################################################### */
 
 // Reads 64 elements 16 at a time
-void mem_read(ap_uint<512> *A_wide, data_t A[N_ROWS][N_COLS]) {
+// UPDATED: Now streams data to A_stream to allow Task 2 to start sooner.
+void mem_read(ap_uint<512> *A_wide, hls::stream<ap_uint<512>>& A_stream) {
     const int TOTAL = N_ROWS * N_COLS;   // 16384
     const int WORDS = TOTAL / 16;        // 1024
     for (int w = 0; w < WORDS; w++) {
         #pragma HLS PIPELINE II=1
-        ap_uint<512> wide = A_wide[w];
-        for (int k = 0; k < 16; k++) {
-            #pragma HLS UNROLL
-            int idx = w * 16 + k;
-            int r = idx / N_COLS;
-            int c = idx % N_COLS;
-            ap_uint<32> bits = wide.range((k+1)*32 - 1, k*32);
-            data_t val;
-            val.range() = bits.range(23, 0); // Explicitly map the 24 bits of your type
-            A[r][c] = val;
-        }
+        A_stream.write(A_wide[w]);
     }
 }
 
 
 // Writes back to the memory using scaled row data from a stream. 16 elemts at a time.
-void mem_write(data_t C[N_ROWS][N_COLS], ap_uint<512> *C_wide) {
+// UPDATED: Now reads from C_stream.
+void mem_write(hls::stream<ap_uint<512>>& C_stream, ap_uint<512> *C_wide) {
     const int TOTAL = N_ROWS * N_COLS;   // 16384
     const int WORDS = TOTAL / 16;        // 1024
 
     for (int w = 0; w < WORDS; w++) {
         #pragma HLS PIPELINE II=1
-        ap_uint<512> wide;
-        
-        for (int k = 0; k < 16; k++) {
-            #pragma HLS UNROLL
-            int idx = w * 16 + k;
-            int r = idx / N_COLS;
-            int c = idx % N_COLS;
-            
-            // Extract the internal bits of the fixed-point value
-            // We initialize a 32-bit container to ensure AXI alignment
-            ap_uint<32> bits = 0;
-            bits.range(23, 0) = C[r][c].range();
-            
-            // Pack into the 512-bit wide word
-            wide.range((k + 1) * 32 - 1, k * 32) = bits;
-        }
-        // Single 512-bit burst write
-        C_wide[w] = wide;
+        C_wide[w] = C_stream.read();
     }
 }
 
@@ -67,16 +42,27 @@ void row_divider(data_t row_in[N_COLS], data_t row_out[N_COLS], data_t denom) {
 }
 
 // Handle entire row normailization so it can be pipelined
-void row_normalization(data_t A[N_ROWS][N_COLS], data_t tmp[N_ROWS][N_COLS]) {
+// UPDATED: Now reads from A_stream and unpacks 16 elements at a time.
+void row_normalization(hls::stream<ap_uint<512>>& A_stream, data_t tmp[N_ROWS][N_COLS]) {
+    data_t row_buffer[N_COLS];
+    #pragma HLS array_partition variable=row_buffer complete
     for (int i = 0; i < N_ROWS; i++) {
-        #pragma HLS PIPELINE II = 1
+        #pragma HLS PIPELINE II = 4
         data_t row_sum = 0.0;
 
         // Compute row sum
-        for (int j = 0; j < N_COLS; j++) {
-            //#pragma HLS UNROLL
-            #pragma HLS BIND_OP variable=row_sum op=add impl=dsp latency=2
-            row_sum += A[i][j];
+        // Minimal Change: Unpack stream and add latency=3 to break the 18-level chain
+        for (int w = 0; w < 4; w++) {
+            ap_uint<512> wide = A_stream.read();
+            for (int k = 0; k < 16; k++) {
+                #pragma HLS UNROLL
+                #pragma HLS BIND_OP variable=row_sum op=add impl=dsp latency=3
+                ap_uint<32> bits = wide.range((k+1)*32 - 1, k*32);
+                data_t val;
+                val.range() = bits.range(23, 0);
+                row_buffer[w*16 + k] = val;
+                row_sum += val;
+            }
         }
 
         // Avoid division by zero, add small bias
@@ -84,7 +70,7 @@ void row_normalization(data_t A[N_ROWS][N_COLS], data_t tmp[N_ROWS][N_COLS]) {
         #pragma HLS BIND_OP variable=denom op=add impl=dsp
         denom = row_sum + (data_t)1.0;
 
-        row_divider(A[i], tmp[i], denom);
+        row_divider(row_buffer, tmp[i], denom);
     }
 }
 
@@ -119,23 +105,30 @@ void col_scale_calc(data_t col_sums[N_COLS], data_t scales[N_COLS]) {
 }
 
 // Once the col math is done, scale by rows for efficient writeback.
-void scale_rows(data_t tmp[N_ROWS][N_COLS], data_t scales[N_COLS], data_t C[N_ROWS][N_COLS]) {
+// UPDATED: Now writes results to C_stream 16 elements at a time.
+void scale_rows(data_t tmp[N_ROWS][N_COLS], data_t scales[N_COLS], hls::stream<ap_uint<512>>& C_stream) {
     data_t val;
     for (int i = 0; i < N_ROWS; i++) {
-        #pragma HLS PIPELINE II=1 
+        #pragma HLS PIPELINE II=4 
         // Scale 1 row each cycle
-        for (int j = 0; j < N_COLS; j++) {
-            // 64 DSPs fire simultaneously
-            #pragma HLS_UNROLL factor = 16
-            #pragma HLS BIND_OP variable=val op=mul impl=dsp
-            val = tmp[i][j] * scales[j];
-            C[i][j] = val;
+        for (int w = 0; w < 4; w++) {
+            ap_uint<512> wide;
+            for (int k = 0; k < 16; k++) {
+                #pragma HLS UNROLL
+                #pragma HLS BIND_OP variable=val op=mul impl=dsp
+                val = tmp[i][w*16 + k] * scales[w*16 + k];
+                
+                ap_uint<32> bits = 0;
+                bits.range(23, 0) = val.range();
+                wide.range((k + 1) * 32 - 1, k * 32) = bits;
+            }
+            C_stream.write(wide);
         }
     }
 }
 
 // Entire col scaling method
-void col_scaling(data_t tmp[N_ROWS][N_COLS], data_t C[N_ROWS][N_COLS]) {
+void col_scaling(data_t tmp[N_ROWS][N_COLS], hls::stream<ap_uint<512>>& C_stream) {
     data_t scales[N_COLS];
     data_t col_sums[N_COLS];
     #pragma HLS array_partition variable=scales complete
@@ -143,8 +136,8 @@ void col_scaling(data_t tmp[N_ROWS][N_COLS], data_t C[N_ROWS][N_COLS]) {
 
     // These MUST be sequential because scales depend on col_sums
     col_accumulator(tmp, col_sums); // store the running sum of each column and eventual scale
-    col_scale_calc(col_sums, scales); // Calculate the scales  
-    scale_rows(tmp, scales, C);  // Scale rows 1 at a time
+    col_scale_calc(col_sums, scales); // Calculate the scales   
+    scale_rows(tmp, scales, C_stream);  // Scale rows 1 at a time
 }
 
 /* #########################################################################
@@ -161,31 +154,28 @@ void top_kernel(data_t A_DRAM[N_ROWS][N_COLS],
     #pragma HLS INTERFACE s_axilite port=return
 
     // On-chip buffers for A_DRAM and C_DRAM
-    data_t C[N_ROWS][N_COLS];
-    data_t A[N_ROWS][N_COLS];
     data_t tmp[N_ROWS][N_COLS];
+    hls::stream<ap_uint<512>> A_stream("A_stream");
+    hls::stream<ap_uint<512>> C_stream("C_stream");
     
-    #pragma HLS array_partition variable=A complete dim=2
-    // #pragma HLS array_partition variable=C complete dim=2
+    // Complete partitioning preserved for Task 2/3 performance
     #pragma HLS array_partition variable=tmp complete dim=2
-
-    #pragma HLS array_partition variable=A cyclic factor=16 dim=2
-    #pragma HLS array_partition variable=tmp cyclic factor=16 dim=2
-    #pragma HLS array_partition variable=C cyclic factor=16 dim=2
+    #pragma HLS stream variable=A_stream depth=128
+    #pragma HLS stream variable=C_stream depth=128
 
     // Create a dataflow to pipeline each function
     #pragma HLS dataflow
 
     // Read from DRAM
-    mem_read((ap_uint<512> *)A_DRAM, A);
+    mem_read((ap_uint<512> *)A_DRAM, A_stream);
 
     // Phase 1: Row-wise normalization
-    row_normalization(A, tmp);
+    row_normalization(A_stream, tmp);
 
     // Phase 2: Column-wise scaling
-    col_scaling(tmp, C);
+    col_scaling(tmp, C_stream);
 
     // Write to DRAM
-    mem_write(C, (ap_uint<512> *)C_DRAM);
+    mem_write(C_stream, (ap_uint<512> *)C_DRAM);
 
 }
