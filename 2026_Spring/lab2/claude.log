@@ -1,0 +1,159 @@
+#include "dcl.h"
+#include <ap_int.h>
+
+typedef ap_uint<512> wide_t;
+
+/* HLS pads ap_fixed<24,8> to 32 bits in auto-widened AXI.
+   512 / 32 = 16 elements per beat.                        */
+static const int EBITS = 32;           // padded element width
+static const int DBITS = 24;           // actual data width
+static const int PACK  = 512 / EBITS;  // 16 elements per wide word
+static const int WPR   = NY / PACK;    // 16 words per row
+static const int NWORDS = NX * WPR;    // 4096 total
+
+/* ------------------------------------------------------------------
+   stencil_step: one timestep, src → dst.
+   inline off keeps HLS from merging buf0/buf1 into muxes.
+   ------------------------------------------------------------------ */
+static void stencil_step(data_t src[NX][NY], data_t dst[NX][NY],
+                         const data_t wc, const data_t wa, const data_t wd)
+{
+#pragma HLS inline off
+
+    data_t Lp[NY], Lc[NY], Ln[NY];
+#pragma HLS array_partition variable=Lp dim=1 complete
+#pragma HLS array_partition variable=Lc dim=1 complete
+#pragma HLS array_partition variable=Ln dim=1 complete
+
+    /* Preload row 0 into Ln */
+    PRELOAD:
+    for (int j = 0; j < NY; j++) {
+#pragma HLS unroll
+        Ln[j] = src[0][j];
+    }
+
+    ROW_LOOP:
+    for (int i = 0; i < NX; i++) {
+#pragma HLS pipeline II=1
+#pragma HLS dependence variable=src inter false
+#pragma HLS dependence variable=dst inter false
+
+        /* advance window */
+        for (int j = 0; j < NY; j++) {
+#pragma HLS unroll
+            Lp[j] = Lc[j];
+            Lc[j] = Ln[j];
+        }
+
+        /* prefetch next row */
+        int fnxt = (i + 1 < NX) ? (i + 1) : (NX - 1);
+        for (int j = 0; j < NY; j++) {
+#pragma HLS unroll
+            Ln[j] = src[fnxt][j];
+        }
+
+        /* compute or copy boundary */
+        data_t Ro[NY];
+#pragma HLS array_partition variable=Ro dim=1 complete
+
+        for (int j = 0; j < NY; j++) {
+#pragma HLS unroll
+            if (i == 0 || i == NX - 1 || j == 0 || j == NY - 1) {
+                Ro[j] = Lc[j];
+            } else {
+                acc_t sa = (acc_t)Lp[j]   + (acc_t)Ln[j]   +
+                           (acc_t)Lc[j-1] + (acc_t)Lc[j+1];
+                acc_t sd = (acc_t)Lp[j-1] + (acc_t)Lp[j+1] +
+                           (acc_t)Ln[j-1] + (acc_t)Ln[j+1];
+                acc_t cc = (acc_t)Lc[j];
+                acc_t o  = (acc_t)wc * cc + (acc_t)wa * sa + (acc_t)wd * sd;
+                Ro[j]   = (data_t)o;
+            }
+        }
+
+        /* write result row */
+        for (int j = 0; j < NY; j++) {
+#pragma HLS unroll
+            dst[i][j] = Ro[j];
+        }
+    }
+}
+
+/* ------------------------------------------------------------------
+   Top-level kernel
+   ------------------------------------------------------------------ */
+void top_kernel(const data_t A_in[NX][NY],
+                data_t A_out[NX][NY]) {
+#pragma HLS interface m_axi port=A_in  offset=slave bundle=A_in  depth=65536 max_widen_bitwidth=512
+#pragma HLS interface m_axi port=A_out offset=slave bundle=A_out depth=65536 max_widen_bitwidth=512
+#pragma HLS interface s_axilite port=return
+
+    static data_t buf0[NX][NY];
+    static data_t buf1[NX][NY];
+#pragma HLS array_partition variable=buf0 dim=2 complete
+#pragma HLS array_partition variable=buf1 dim=2 complete
+
+    const data_t wc = (data_t)0.50;
+    const data_t wa = (data_t)0.10;
+    const data_t wd = (data_t)0.025;
+
+    /* ================================================================
+       LOAD: 512-bit burst → buf0.
+       Each 512-bit word = 16 elements at 32-bit stride (24 data + 8 pad).
+       4096 words at II=1 ≈ 4100 cycles.
+       ================================================================ */
+    {
+        const wide_t *win = (const wide_t *)A_in;
+        LOAD:
+        for (int idx = 0; idx < NWORDS; idx++) {
+#pragma HLS pipeline II=1
+            wide_t d = win[idx];
+            int i = idx / WPR;
+            int w = idx % WPR;
+            for (int k = 0; k < PACK; k++) {
+#pragma HLS unroll
+                data_t v;
+                v.range() = d.range(k * EBITS + DBITS - 1, k * EBITS);
+                buf0[i][w * PACK + k] = v;
+            }
+        }
+    }
+
+    /* ================================================================
+       TIMESTEPS: 30 × 256 rows at II=1 ≈ 8100 cycles.
+       No mux inside — stencil_step sees only src/dst pointers.
+       ================================================================ */
+    TIMESTEP:
+    for (int t = 0; t < TSTEPS; t++) {
+#pragma HLS loop_tripcount min=30 max=30
+        if ((t & 1) == 0)
+            stencil_step(buf0, buf1, wc, wa, wd);
+        else
+            stencil_step(buf1, buf0, wc, wa, wd);
+    }
+
+    /* ================================================================
+       STORE: buf → 512-bit burst.
+       Same 32-bit-padded packing as load.
+       4096 words at II=1 ≈ 4100 cycles.
+       ================================================================ */
+    {
+        wide_t *wout = (wide_t *)A_out;
+        bool fb0 = ((TSTEPS & 1) == 0);
+
+        STORE:
+        for (int idx = 0; idx < NWORDS; idx++) {
+#pragma HLS pipeline II=1
+            int i = idx / WPR;
+            int w = idx % WPR;
+            wide_t d = 0;
+            for (int k = 0; k < PACK; k++) {
+#pragma HLS unroll
+                data_t v = fb0 ? buf0[i][w * PACK + k]
+                               : buf1[i][w * PACK + k];
+                d.range(k * EBITS + DBITS - 1, k * EBITS) = v.range();
+            }
+            wout[idx] = d;
+        }
+    }
+}
