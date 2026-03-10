@@ -16,6 +16,7 @@ config_compile -pipeline_loops 0
 # FPGA part and clock configuration
 # default frequency is 100 MHz
 set_part {xczu3eg-sbva484-1-e}
+create_clock -period 2.2 -name default
 #create_clock -period 4 -name default
 
 # C synthesis for HLS design, generating RTL
