@@ -13,6 +13,9 @@ add_files -tb host.cpp
 config_unroll -tripcount_threshold 0
 config_compile -pipeline_loops 0
 
+# Aggressive scheduling to help with timing
+config_schedule -enable_dsp_full_reg=true
+
 # FPGA part and clock configuration
 # default frequency is 100 MHz
 set_part {xczu3eg-sbva484-1-e}
@@ -29,6 +32,7 @@ cosim_design
 # Note: -flow syn performs RTL synthesis; 
 # -flow impl performs both RTL synthesis and implementation, including a detailed place and route of the RTL netlist.
 # implementation flow will take much longer time
+config_export -vivado_optimization_level 2
 export_design -format ip_catalog -flow impl
 #export_design -format ip_catalog
 

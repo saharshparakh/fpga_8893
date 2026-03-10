@@ -10,19 +10,31 @@ typedef ap_uint<1024> wide_t;
 
 // --- Sub-Kernel Functions (Required for Canonical Dataflow) ---
 
-static void proc_K0(const wide_t* in, hls::stream<wide_short_t>& to_k1, hls::stream<wide_short_t>& to_k2) {
+static void read_input(const wide_t* in, hls::stream<wide_t>& to_k0) {
+    for (int i = 0; i < N / 32; i++) {
+        #pragma HLS pipeline II=1
+        // Point-to-point move from M_AXI to local FIFO
+        to_k0.write(in[i]);
+    }
+}
+
+static void proc_K0(hls::stream<wide_t>& from_input, 
+                    hls::stream<wide_short_t>& to_k1, 
+                    hls::stream<wide_short_t>& to_k2) {
     const short_data_t alpha = 0.875;
     const short_data_t beta  = 0.125;
     for (int i = 0; i < N / 32; i++) {
         #pragma HLS pipeline II=1
-        wide_t temp = in[i];
+        // Reading from a local stream is MUCH faster than reading from a bus
+        wide_t temp = from_input.read(); 
         wide_short_t out_v;
         for (int j = 0; j < 32; j++) {
             #pragma HLS unroll
             data_t val; val.range() = temp.range(j*32+31, j*32);
-            // Internal DSP pipeline stage
-            short_data_t res = (short_data_t)(alpha * (short_data_t)val + beta);
-            #pragma HLS BIND_OP variable=res op=mul impl=dsp latency=3
+            short_data_t s_val = (short_data_t)val;
+            // Native 18-bit DSP path with M and P registers
+            short_data_t res = (short_data_t)(alpha * s_val + beta);
+            #pragma HLS BIND_OP variable=res op=mul impl=dsp latency=2
             out_v.range(j*18+17, j*18) = res.range();
         }
         to_k1.write(out_v);
@@ -137,7 +149,15 @@ static void proc_K3(hls::stream<wide_short_t>& from_k1, hls::stream<stat_t>& fro
     }
 }
 
-static void proc_K4(hls::stream<wide_short_t>& from_k3, wide_t* out) {
+// --- Output Decoupler ---
+static void write_output(hls::stream<wide_t>& from_k4, wide_t* out) {
+    for (int i = 0; i < N / 32; i++) {
+        #pragma HLS pipeline II=1
+        out[i] = from_k4.read();
+    }
+}
+
+static void proc_K4(hls::stream<wide_short_t>& from_k3, hls::stream<wide_t>& to_output) {
     const short_data_t gamma = 1.25, delta = 0.05;
     for (int i = 0; i < N / 32; i++) {
         #pragma HLS pipeline II=1
@@ -148,11 +168,12 @@ static void proc_K4(hls::stream<wide_short_t>& from_k3, wide_t* out) {
             short_data_t v; v.range() = in_v.range(j*18+17, j*18);
             short_data_t z = (short_data_t)(gamma * v + delta);
             #pragma HLS BIND_OP variable=z op=mul impl=dsp latency=2
+            
             if (z < 0) z = 0; if (z > 7.9) z = 7.9;
             data_t f_z = (data_t)z;
             out_v.range(j*32+31, j*32) = f_z.range();
         }
-        out[i] = out_v;
+        to_output.write(out_v);
     }
 }
 
@@ -163,20 +184,21 @@ void top_kernel(const data_t in[N], data_t out[N]) {
 #pragma HLS interface m_axi port=out offset=slave bundle=out
 #pragma HLS interface s_axilite port=return
 
+    // Internal streams for decoupling
+    hls::stream<wide_t> raw_in, raw_out;
+    #pragma HLS stream variable=raw_in depth=16
+    #pragma HLS stream variable=raw_out depth=16
+    
     hls::stream<wide_short_t> s0_k1, s0_k2, s1_k3, s3_k4;
     hls::stream<stat_t> stats;
-    
-    // Increased depths to prevent deadlock during K2's block-averaging latency
-    #pragma HLS stream variable=s0_k1 depth=16
-    #pragma HLS stream variable=s0_k2 depth=16
-    #pragma HLS stream variable=s1_k3 depth=512 // Essential: must hold elements while K2 finishes block
-    #pragma HLS stream variable=stats depth=4
-    #pragma HLS stream variable=s3_k4 depth=16
+    #pragma HLS stream variable=s1_k3 depth=512 
 
     #pragma HLS dataflow
-    proc_K0((const wide_t*)in, s0_k1, s0_k2);
+    read_input((const wide_t*)in, raw_in);
+    proc_K0(raw_in, s0_k1, s0_k2);
     proc_K1(s0_k1, s1_k3);
     proc_K2(s0_k2, stats);
     proc_K3(s1_k3, stats, s3_k4);
-    proc_K4(s3_k4, (wide_t*)out);
+    proc_K4(s3_k4, raw_out);
+    write_output(raw_out, (wide_t*)out);
 }
