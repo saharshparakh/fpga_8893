@@ -34,7 +34,7 @@ static void proc_K0(hls::stream<wide_t>& from_input,
             short_data_t s_val = (short_data_t)val;
             // Native 18-bit DSP path with M and P registers
             short_data_t res = (short_data_t)(alpha * s_val + beta);
-            #pragma HLS BIND_OP variable=res op=mul impl=dsp latency=2
+            #pragma HLS BIND_OP variable=res op=mul impl=dsp latency=3
             out_v.range(j*18+17, j*18) = res.range();
         }
         to_k1.write(out_v);
@@ -62,8 +62,8 @@ static void proc_K1(hls::stream<wide_short_t>& from_k0, hls::stream<wide_short_t
             short_data_t x0 = curr[j];
             short_data_t x1 = (j >= 1) ? curr[j-1] : p1;
             short_data_t x2 = (j >= 2) ? curr[j-2] : ((j == 1) ? p1 : p2);
-            
-            // Forcing DSP internal registers to hit 1.44ns
+
+            // Use DSP cascade: m0+m1 in one DSP, then +m2
             short_data_t m0 = x0 * w0;
             #pragma HLS BIND_OP variable=m0 op=mul impl=dsp latency=2
             short_data_t m1 = x1 * w1;
@@ -71,11 +71,21 @@ static void proc_K1(hls::stream<wide_short_t>& from_k0, hls::stream<wide_short_t
             short_data_t m2 = x2 * w2;
             #pragma HLS BIND_OP variable=m2 op=mul impl=dsp latency=2
 
-            short_acc_t acc = m0 + m1 + m2;
-            short_data_t y = (short_data_t)acc;
+            // Two-input add only (not three)
+            short_data_t sum01 = m0 + m1;
+            short_data_t acc = sum01 + m2;
 
-            if (y < 0) y = -y;
-            if (y > 7.5) y = 7.5;
+            // Simplified clamp: single comparison using unsigned abs
+            ap_uint<18> abs_val = acc.range();
+            if (acc < 0) abs_val = (-acc).range();
+            short_data_t y;
+            const short_data_t limit = 7.5;
+            if (acc < 0) {
+                y = (-acc > limit) ? limit : (short_data_t)(-acc);
+            } else {
+                y = (acc > limit) ? limit : acc;
+            }
+        
             out_v.range(j*18+17, j*18) = y.range();
         }
         p1 = curr[31]; p2 = curr[30];
@@ -85,63 +95,61 @@ static void proc_K1(hls::stream<wide_short_t>& from_k0, hls::stream<wide_short_t
 
 static void proc_K2(hls::stream<wide_short_t>& from_k0, hls::stream<stat_t>& to_k3) {
     for (int b = 0; b < N / BLOCK; b++) {
-        short_acc_t total_sum = 0;
+        ap_fixed<27, 9> total_sum = 0;
         for (int i = 0; i < BLOCK / 32; i++) {
             #pragma HLS pipeline II=1
             wide_short_t in_v = from_k0.read();
-            
-            short_acc_t abs_v[32];
+
+            ap_uint<18> abs_v[32];
             #pragma HLS array_partition variable=abs_v complete
             for (int j = 0; j < 32; j++) {
                 #pragma HLS unroll
-                short_data_t v; v.range() = in_v.range(j*18+17, j*18);
-                short_acc_t a = (v < 0) ? (short_acc_t)(-v) : (short_acc_t)v;
-                // STAGE 1 FENCE
-                #pragma HLS BIND_OP variable=a op=add impl=dsp latency=1
-                abs_v[j] = a;
+                short_data_t v;
+                v.range() = in_v.range(j*18+17, j*18);
+                abs_v[j] = (v < 0) ? ap_uint<18>((-v).range()) : ap_uint<18>(v.range());
             }
 
-            // STAGE 2 FENCE: Tree Levels 1 & 2 combined
-            short_acc_t s2[8];
-            #pragma HLS array_partition variable=s2 complete
-            for(int j=0; j<8; j++) {
+            ap_uint<20> s1[8];
+            #pragma HLS array_partition variable=s1 complete
+            for (int j = 0; j < 8; j++) {
                 #pragma HLS unroll
-                short_acc_t sum_l2 = (abs_v[j*4] + abs_v[j*4+1]) + (abs_v[j*4+2] + abs_v[j*4+3]);
-                #pragma HLS BIND_OP variable=sum_l2 op=add impl=dsp latency=1
-                s2[j] = sum_l2;
+                s1[j] = (abs_v[4*j] + abs_v[4*j+1]) +
+                         (abs_v[4*j+2] + abs_v[4*j+3]);
             }
 
-            // STAGE 3: Final reduction (The path is short enough for fabric here)
-            short_acc_t s3_0 = s2[0] + s2[1];
-            short_acc_t s3_1 = s2[2] + s2[3];
-            short_acc_t s3_2 = s2[4] + s2[5];
-            short_acc_t s3_3 = s2[6] + s2[7];
+            ap_uint<22> q0 = s1[0] + s1[1];
+            ap_uint<22> q1 = s1[2] + s1[3];
+            ap_uint<22> q2 = s1[4] + s1[5];
+            ap_uint<22> q3 = s1[6] + s1[7];
+            ap_uint<23> h0 = q0 + q1;
+            ap_uint<23> h1 = q2 + q3;
+            ap_uint<23> block_sum = h0 + h1;
 
-            short_acc_t s4_0 = s3_0 + s3_1;
-            short_acc_t s4_1 = s3_2 + s3_3;
-
-            // Final reduction: Force to DSP to break the connection to the final accumulator
-            short_acc_t block_sum = s4_0 + s4_1;
-            #pragma HLS BIND_OP variable=block_sum op=add impl=dsp latency=1
             total_sum += block_sum;
         }
-        to_k3.write((stat_t)(total_sum / BLOCK) + (stat_t)0.5);
+        // FIX 2: Compute reciprocal here instead of in K3
+        stat_t avg = (stat_t)(total_sum / BLOCK) + (stat_t)0.5;
+        stat_t inv = (stat_t)((stat_t)1.0 / avg);
+        to_k3.write(inv);
     }
 }
 
-static void proc_K3(hls::stream<wide_short_t>& from_k1, hls::stream<stat_t>& from_k2, hls::stream<wide_short_t>& to_k4) {
+// FIX 3: K3 no longer divides — just reads the reciprocal directly
+static void proc_K3(hls::stream<wide_short_t>& from_k1,
+                     hls::stream<stat_t>& from_k2,
+                     hls::stream<wide_short_t>& to_k4) {
     for (int b = 0; b < N / BLOCK; b++) {
-        stat_t inv_st = (stat_t)((stat_t)1.0 / from_k2.read());
+        stat_t inv_st = from_k2.read(); // already reciprocal
         for (int i = 0; i < BLOCK / 32; i++) {
             #pragma HLS pipeline II=1
             wide_short_t in_v = from_k1.read();
             wide_short_t out_v;
             for (int j = 0; j < 32; j++) {
                 #pragma HLS unroll
-                short_data_t v; v.range() = in_v.range(j*18+17, j*18);
+                short_data_t v;
+                v.range() = in_v.range(j*18+17, j*18);
                 short_data_t res = v * (short_data_t)inv_st;
-                // Deeper latency for the normalization mult
-                #pragma HLS BIND_OP variable=res op=mul impl=dsp latency=2
+                #pragma HLS BIND_OP variable=res op=mul impl=dsp latency=3
                 out_v.range(j*18+17, j*18) = res.range();
             }
             to_k4.write(out_v);
@@ -167,10 +175,13 @@ static void proc_K4(hls::stream<wide_short_t>& from_k3, hls::stream<wide_t>& to_
             #pragma HLS unroll
             short_data_t v; v.range() = in_v.range(j*18+17, j*18);
             short_data_t z = (short_data_t)(gamma * v + delta);
-            #pragma HLS BIND_OP variable=z op=mul impl=dsp latency=2
-            
-            if (z < 0) z = 0; if (z > 7.9) z = 7.9;
-            data_t f_z = (data_t)z;
+            #pragma HLS BIND_OP variable=z op=mul impl=dsp latency=3
+
+            // Single-level clamp using ternary
+            const short_data_t lo = 0, hi = 7.9;
+            short_data_t clamped = (z < lo) ? lo : ((z > hi) ? hi : z);
+
+            data_t f_z = (data_t)clamped;
             out_v.range(j*32+31, j*32) = f_z.range();
         }
         to_output.write(out_v);
@@ -186,12 +197,15 @@ void top_kernel(const data_t in[N], data_t out[N]) {
 
     // Internal streams for decoupling
     hls::stream<wide_t> raw_in, raw_out;
-    #pragma HLS stream variable=raw_in depth=16
-    #pragma HLS stream variable=raw_out depth=16
-    
     hls::stream<wide_short_t> s0_k1, s0_k2, s1_k3, s3_k4;
     hls::stream<stat_t> stats;
-    #pragma HLS stream variable=s1_k3 depth=512 
+    #pragma HLS stream variable=raw_in  depth=32 type=fifo
+    #pragma HLS stream variable=raw_out depth=32 type=fifo
+    #pragma HLS stream variable=s0_k1   depth=32 type=fifo
+    #pragma HLS stream variable=s0_k2   depth=32 type=fifo
+    #pragma HLS stream variable=s1_k3   depth=512 type=fifo
+    #pragma HLS stream variable=s3_k4   depth=32 type=fifo
+    #pragma HLS stream variable=stats   depth=4 type=fifo   
 
     #pragma HLS dataflow
     read_input((const wide_t*)in, raw_in);

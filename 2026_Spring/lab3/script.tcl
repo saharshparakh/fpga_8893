@@ -12,27 +12,28 @@ add_files -tb host.cpp
 # stop automatic unrolling and pipelining by Vitis so baseline design fits on FPGA
 config_unroll -tripcount_threshold 0
 config_compile -pipeline_loops 0
-
-# Aggressive scheduling to help with timing
 config_schedule -enable_dsp_full_reg=true
+config_interface -register_io both
 
 # FPGA part and clock configuration
 # default frequency is 100 MHz
 set_part {xczu3eg-sbva484-1-e}
-create_clock -period 2.2 -name default
+create_clock -period 2.5 -name default
 #create_clock -period 4 -name default
 
 # C synthesis for HLS design, generating RTL
 csynth_design
 
 # C/RTL co-simulation; can be commented if not needed
-cosim_design
+#cosim_design
 
 # export generated RTL as an IP; can be commented if not needed
 # Note: -flow syn performs RTL synthesis; 
 # -flow impl performs both RTL synthesis and implementation, including a detailed place and route of the RTL netlist.
 # implementation flow will take much longer time
-config_export -vivado_optimization_level 2
+config_export -vivado_optimization_level 3
+config_export -vivado_phys_opt all
+config_export -vivado_impl_strategy Performance_ExplorePostRoutePhysOpt
 export_design -format ip_catalog -flow impl
 #export_design -format ip_catalog
 
