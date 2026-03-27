@@ -13,7 +13,6 @@ add_files -tb host.cpp
 config_unroll -tripcount_threshold 0
 config_compile -pipeline_loops 0
 config_schedule -enable_dsp_full_reg=true
-config_interface -register_io both
 
 # FPGA part and clock configuration
 # default frequency is 100 MHz
@@ -25,7 +24,7 @@ create_clock -period 2.5 -name default
 csynth_design
 
 # C/RTL co-simulation; can be commented if not needed
-#cosim_design
+cosim_design
 
 # export generated RTL as an IP; can be commented if not needed
 # Note: -flow syn performs RTL synthesis; 
