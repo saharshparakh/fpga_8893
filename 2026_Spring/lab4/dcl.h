@@ -1,0 +1,34 @@
+#ifndef DCL_H
+#define DCL_H
+
+#include <ap_fixed.h>
+#include <ap_int.h>
+
+#define NUM_IMAGES 64
+#define IMG_W 64
+#define IMG_H 64
+#define N_DCT 16
+#define BOX_SIZE (IMG_W / N_DCT)
+#define NUM_HASH_BITS 64
+#define TOP_K 50
+
+typedef ap_fixed<24, 12, AP_RND, AP_SAT> dct_t;
+typedef ap_uint<64> hash_t;
+typedef ap_uint<8> pixel_t;
+
+struct TopKResult {
+    int id;
+    int distance;
+};
+
+void top_kernel(
+    const pixel_t input_rgb[NUM_IMAGES * IMG_W * IMG_H * 3],
+    dct_t inter1_gray[NUM_IMAGES * N_DCT * N_DCT],
+    dct_t inter2_rowdct[NUM_IMAGES * N_DCT * N_DCT],
+    dct_t inter3_coldct[NUM_IMAGES * N_DCT * N_DCT],
+    hash_t inter4_hash[NUM_IMAGES],
+    hash_t target_hash,
+    TopKResult out_topk[TOP_K]
+);
+
+#endif
