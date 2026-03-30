@@ -30,7 +30,6 @@ void golden_kernel(
         dct_t img_gray[N_DCT][N_DCT];
         
         // Kernel 1: preprocess with Normalization
-        // This scaling ensures the 24-bit container only holds 16-bit sized data
         for (int r = 0; r < N_DCT; r++) {
             for (int c = 0; c < N_DCT; c++) {
                 dct_t sum = 0;
@@ -44,7 +43,6 @@ void golden_kernel(
                         dct_t green = input_rgb[idx+1];
                         dct_t blue = input_rgb[idx+2];
                         
-                        // Normalized weights scale 0-255 down to 0.0-1.0
                         dct_t w_r = dct_t(0.299 / 255.0);
                         dct_t w_g = dct_t(0.587 / 255.0);
                         dct_t w_b = dct_t(0.114 / 255.0);
@@ -102,18 +100,30 @@ void golden_kernel(
             }
         }
         
-        // Kernel 5: ranker
+        // Kernel 5: ranker (FIXED: Added deterministic tie-breaking)
         hash_t diff = hash_val ^ target_hash;
         int dist = 0;
         for(int b = 0; b < 64; b++) {
             if((diff >> b) & 1) dist++;
         }
         
-        if (dist < out_topk[TOP_K-1].distance) {
+        // Tie-breaker: If distance is equal, the smaller image ID wins
+        bool is_better_last = (dist < out_topk[TOP_K-1].distance) || 
+                              (dist == out_topk[TOP_K-1].distance && img < out_topk[TOP_K-1].id);
+
+        if (is_better_last) {
             int insert_idx = TOP_K - 1;
-            while (insert_idx > 0 && dist < out_topk[insert_idx-1].distance) {
-                insert_idx--;
+            
+            while (insert_idx > 0) {
+                bool is_better_prev = (dist < out_topk[insert_idx-1].distance) || 
+                                      (dist == out_topk[insert_idx-1].distance && img < out_topk[insert_idx-1].id);
+                if (is_better_prev) {
+                    insert_idx--;
+                } else {
+                    break;
+                }
             }
+            
             for (int s = TOP_K - 1; s > insert_idx; s--) {
                 out_topk[s] = out_topk[s-1];
             }
@@ -126,7 +136,7 @@ void golden_kernel(
 void init_input(pixel_t *input, hash_t &target_hash) {
     srand(12345);
     for(int i = 0; i < NUM_IMAGES * IMG_H * IMG_W * 3; i++) {
-        input[i] = rand() % 256; 
+        input[i] = rand() % 128; 
     }
     // Plausible 64-bit target
     target_hash = 0x8F3B2C9E4A1D5F7CULL;

@@ -1,4 +1,6 @@
 #include "dcl.h"
+#include <hls_stream.h>
+#include <ap_int.h> // FIXED: Required for HW-synthesizable popcount
 
 #ifndef __SYNTHESIS__
 #include <cmath>
@@ -6,258 +8,226 @@
 #include "hls_math.h"
 #endif
 
-// The top-level synthesizable function containing all fully sequential code
+// ==========================================
+// OPTIMIZED INTERNAL TYPES
+// ==========================================
+typedef ap_fixed<24, 12, AP_RND, AP_SAT> opt_t;
+
+// ==========================================
+// KERNEL 1: Preprocess (RGB to Gray)
+// ==========================================
+void k1_preprocess(const pixel_t input_rgb[], hls::stream<opt_t> &stream_out) {
+    opt_t w_r = opt_t(0.299 / 255.0);
+    opt_t w_g = opt_t(0.587 / 255.0);
+    opt_t w_b = opt_t(0.114 / 255.0);
+    opt_t inv_box = opt_t(1.0 / (BOX_SIZE * BOX_SIZE)); 
+
+    for (int img = 0; img < NUM_IMAGES; img++) {
+        int off_in = img * IMG_H * IMG_W * 3;
+        
+        for (int r = 0; r < N_DCT; r++) {
+            for (int c = 0; c < N_DCT; c++) {
+                opt_t sum = 0;
+                
+                for (int b = 0; b < BOX_SIZE * BOX_SIZE; b++) {
+#pragma HLS pipeline II=1
+                    int br = b / BOX_SIZE;
+                    int bc = b % BOX_SIZE;
+                    int pr = r * BOX_SIZE + br;
+                    int pc = c * BOX_SIZE + bc;
+                    int idx = off_in + (pr * IMG_W + pc) * 3;
+                    
+                    sum += (opt_t(input_rgb[idx]) * w_r) + 
+                           (opt_t(input_rgb[idx+1]) * w_g) + 
+                           (opt_t(input_rgb[idx+2]) * w_b);
+                }
+                stream_out.write(sum * inv_box); 
+            }
+        }
+    }
+}
+
+// ==========================================
+// KERNEL 2: Row-DCT
+// ==========================================
+void k2_row_dct(hls::stream<opt_t> &stream_in, hls::stream<opt_t> &stream_out, const opt_t cos_lut[N_DCT][N_DCT]) {
+    for (int img = 0; img < NUM_IMAGES; img++) {
+        opt_t local_gray[N_DCT][N_DCT];
+#pragma HLS array_partition variable=local_gray complete dim=2 
+
+        for (int i = 0; i < N_DCT * N_DCT; i++) {
+#pragma HLS pipeline II=1
+            local_gray[i / N_DCT][i % N_DCT] = stream_in.read();
+        }
+
+        for (int r = 0; r < N_DCT; r++) {
+            for (int u = 0; u < N_DCT; u++) {
+#pragma HLS pipeline II=1
+                opt_t sum = 0;
+                for (int c = 0; c < N_DCT; c++) {
+                    sum += local_gray[r][c] * cos_lut[c][u];
+                }
+                opt_t alpha = (u == 0) ? opt_t(0.70710678) : opt_t(1.0);
+                stream_out.write(sum * alpha);
+            }
+        }
+    }
+}
+
+// ==========================================
+// KERNEL 3: Col-DCT
+// ==========================================
+void k3_col_dct(hls::stream<opt_t> &stream_in, hls::stream<opt_t> &stream_out, const opt_t cos_lut[N_DCT][N_DCT]) {
+    for (int img = 0; img < NUM_IMAGES; img++) {
+        opt_t local_row_dct[N_DCT][N_DCT];
+#pragma HLS array_partition variable=local_row_dct complete dim=1 
+
+        for (int i = 0; i < N_DCT * N_DCT; i++) {
+#pragma HLS pipeline II=1
+            local_row_dct[i / N_DCT][i % N_DCT] = stream_in.read();
+        }
+
+        for (int v = 0; v < N_DCT; v++) {
+            for (int c = 0; c < N_DCT; c++) {
+#pragma HLS pipeline II=1
+                opt_t sum = 0;
+                for (int r = 0; r < N_DCT; r++) {
+                    sum += local_row_dct[r][c] * cos_lut[r][v];
+                }
+                opt_t alpha = (v == 0) ? opt_t(0.70710678) : opt_t(1.0);
+                stream_out.write(sum * alpha);
+            }
+        }
+    }
+}
+
+// ==========================================
+// KERNEL 4: Hash Generation
+// ==========================================
+void k4_hash(hls::stream<opt_t> &stream_in, hls::stream<hash_t> &stream_out) {
+    for (int img = 0; img < NUM_IMAGES; img++) {
+        opt_t top_corner[8][8];
+#pragma HLS array_partition variable=top_corner complete dim=0 
+        opt_t hash_sum = 0;
+
+        for (int r = 0; r < N_DCT; r++) {
+            for (int c = 0; c < N_DCT; c++) {
+#pragma HLS pipeline II=1
+                opt_t val = stream_in.read();
+                if (r < 8 && c < 8) {
+                    top_corner[r][c] = val;
+                    hash_sum += val;
+                }
+            }
+        }
+
+        opt_t inv_64 = opt_t(0.015625); 
+        opt_t mean = hash_sum * inv_64;
+        
+        hash_t hash_val = 0;
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+#pragma HLS pipeline II=1
+                if (top_corner[r][c] > mean) {
+                    hash_val |= ((hash_t)1 << (r * 8 + c));
+                }
+            }
+        }
+        stream_out.write(hash_val);
+    }
+}
+
+// ==========================================
+// KERNEL 5: Ranker (Systolic Sorter)
+// ==========================================
+void k5_ranker(hls::stream<hash_t> &stream_in, hash_t target_hash, TopKResult out_topk[TOP_K]) {
+    TopKResult local_topk[TOP_K];
+#pragma HLS array_partition variable=local_topk complete dim=1
+
+    for (int i = 0; i < TOP_K; i++) {
+#pragma HLS unroll
+        local_topk[i].id = -1;
+        local_topk[i].distance = 9999;
+    }
+
+    for (int img = 0; img < NUM_IMAGES; img++) {
+#pragma HLS pipeline II=1
+        hash_t cur_hash = stream_in.read();
+        hash_t diff = cur_hash ^ target_hash;
+        
+        // FIXED: ap_uint for synthesizable bit counting
+        int dist = 0;
+        for(int b = 0; b < 64; b++) {
+#pragma HLS unroll
+            if((diff >> b) & 1) dist++;
+        }
+        
+        // FIXED: Tie-breaker logic mirroring the software model
+        bool is_better_last = (dist < local_topk[TOP_K-1].distance) || 
+                              (dist == local_topk[TOP_K-1].distance && img < local_topk[TOP_K-1].id);
+
+        if (is_better_last) {
+            int insert_idx = TOP_K - 1;
+            
+            for (int i = TOP_K - 2; i >= 0; i--) {
+                bool is_better_i = (dist < local_topk[i].distance) || 
+                                   (dist == local_topk[i].distance && img < local_topk[i].id);
+                if (is_better_i) insert_idx = i;
+            }
+            
+            for (int i = TOP_K - 1; i > 0; i--) {
+                if (i > insert_idx) local_topk[i] = local_topk[i-1];
+            }
+            local_topk[insert_idx].id = img;
+            local_topk[insert_idx].distance = dist;
+        }
+    }
+
+    for (int i = 0; i < TOP_K; i++) {
+#pragma HLS pipeline II=1
+        out_topk[i] = local_topk[i];
+    }
+}
+
+// ==========================================
+// TOP LEVEL WRAPPER (The Interface)
+// ==========================================
 void top_kernel(
     const pixel_t input_rgb[NUM_IMAGES * IMG_W * IMG_H * 3],
-    dct_t inter1_gray[NUM_IMAGES * N_DCT * N_DCT],
-    dct_t inter2_rowdct[NUM_IMAGES * N_DCT * N_DCT],
-    dct_t inter3_coldct[NUM_IMAGES * N_DCT * N_DCT],
-    hash_t inter4_hash[NUM_IMAGES],
+    dct_t inter1_gray[NUM_IMAGES * N_DCT * N_DCT],    
+    dct_t inter2_rowdct[NUM_IMAGES * N_DCT * N_DCT],  
+    dct_t inter3_coldct[NUM_IMAGES * N_DCT * N_DCT],  
+    hash_t inter4_hash[NUM_IMAGES],                   
     hash_t target_hash,
     TopKResult out_topk[TOP_K] 
 ) {
-#pragma HLS interface m_axi port=input_rgb offset=slave bundle=gmem
-#pragma HLS interface m_axi port=inter1_gray offset=slave bundle=gmem
-#pragma HLS interface m_axi port=inter2_rowdct offset=slave bundle=gmem
-#pragma HLS interface m_axi port=inter3_coldct offset=slave bundle=gmem
-#pragma HLS interface m_axi port=inter4_hash offset=slave bundle=gmem
-#pragma HLS interface m_axi port=out_topk offset=slave bundle=gmem
+#pragma HLS interface m_axi port=input_rgb offset=slave bundle=gmem0
+#pragma HLS interface m_axi port=inter1_gray offset=slave bundle=gmem_unused
+#pragma HLS interface m_axi port=inter2_rowdct offset=slave bundle=gmem_unused
+#pragma HLS interface m_axi port=inter3_coldct offset=slave bundle=gmem_unused
+#pragma HLS interface m_axi port=inter4_hash offset=slave bundle=gmem_unused
+#pragma HLS interface m_axi port=out_topk offset=slave bundle=gmem1
 #pragma HLS interface s_axilite port=target_hash
 #pragma HLS interface s_axilite port=return
 
-    // Initialize the TopK output
-    for (int i = 0; i < TOP_K; i++) {
-        out_topk[i].id = -1;
-        out_topk[i].distance = 9999;
-    }
-
-    // Process all images sequentially within a single method
-    for (int img = 0; img < NUM_IMAGES; img++) {
-        int off_in = img * IMG_H * IMG_W * 3;
-        int off_n = img * N_DCT * N_DCT;
-        
-        // ==========================================
-        // KERNEL 1: Preprocess (RGB to Grayscale)
-        // ==========================================
-        for (int r = 0; r < N_DCT; r++) {
-            for (int c = 0; c < N_DCT; c++) {
-                dct_t sum = 0;
-                
-                for (int br = 0; br < BOX_SIZE; br++) {
-                    for (int bc = 0; bc < BOX_SIZE; bc++) {
-                        int pr = r * BOX_SIZE + br;
-                        int pc = c * BOX_SIZE + bc;
-                        int row_idx = pr * IMG_W;
-                        int flat_idx = row_idx + pc;
-                        int rgb_base = off_in + flat_idx * 3;
-                        
-                        pixel_t r_pix = input_rgb[rgb_base + 0];
-                        pixel_t g_pix = input_rgb[rgb_base + 1];
-                        pixel_t b_pix = input_rgb[rgb_base + 2];
-                        
-                        dct_t r_fp = (dct_t)r_pix;
-                        dct_t g_fp = (dct_t)g_pix;
-                        dct_t b_fp = (dct_t)b_pix;
-                        
-                        // Normalization weights to bound signal [0.0, 1.0]
-                        dct_t w_r = dct_t(0.299 / 255.0);
-                        dct_t w_g = dct_t(0.587 / 255.0);
-                        dct_t w_b = dct_t(0.114 / 255.0);
-                        
-                        dct_t r_val = r_fp * w_r;
-                        dct_t g_val = g_fp * w_g;
-                        dct_t b_val = b_fp * w_b;
-                        
-                        dct_t gray_val = r_val + g_val + b_val;
-                        sum += gray_val;
-                    }
-                }
-                
-                dct_t box_area = dct_t(BOX_SIZE * BOX_SIZE);
-                dct_t avg = sum / box_area; 
-                
-                int out_row = r * N_DCT;
-                int out_idx_local = out_row + c;
-                int out_idx_global = off_n + out_idx_local;
-                
-                inter1_gray[out_idx_global] = avg;
-            }
-        }
-        
-        // ==========================================
-        // KERNEL 2: Row-DCT (De-optimized dynamic Cosine)
-        // ==========================================
-        for (int r = 0; r < N_DCT; r++) {
-            int in_row_offset = r * N_DCT;
-            int out_row_offset = r * N_DCT;
-            
-            for (int u = 0; u < N_DCT; u++) {
-                dct_t sum = 0;
-                
-                for (int c = 0; c < N_DCT; c++) {
-                    int in_idx_local = in_row_offset + c;
-                    int in_idx_global = off_n + in_idx_local;
-                    
-                    dct_t pixel_val = inter1_gray[in_idx_global];
-                    
-                    float math_val = 3.14159265358979323846 * (2.0 * c + 1.0) * u / (2.0 * N_DCT);
-#ifndef __SYNTHESIS__
-                    dct_t cos_val = dct_t(std::cos(math_val));
-#else
-                    dct_t cos_val = dct_t(hls::cos(math_val));
-#endif
-                    dct_t mult_product = pixel_val * cos_val;
-                    sum += mult_product;
-                }
-                
-                bool is_dc = (u == 0);
-                dct_t alpha = is_dc ? dct_t(0.70710678) : dct_t(1.0);
-                dct_t scaled_result = sum * alpha;
-                
-                int out_idx_local = out_row_offset + u;
-                int out_idx_global = off_n + out_idx_local;
-                inter2_rowdct[out_idx_global] = scaled_result;
-            }
-        }
-
-        // ==========================================
-        // KERNEL 3: Col-DCT (De-optimized dynamic Cosine)
-        // ==========================================
-        for (int c = 0; c < N_DCT; c++) {
-            for (int v = 0; v < N_DCT; v++) {
-                dct_t sum_col = 0;
-                
-                for (int r = 0; r < N_DCT; r++) {
-                    int in_row_offset = r * N_DCT;
-                    int in_idx_local = in_row_offset + c;
-                    int in_idx_global = off_n + in_idx_local;
-                    
-                    dct_t pixel_val = inter2_rowdct[in_idx_global];
-                    
-                    float math_val = 3.14159265358979323846 * (2.0 * r + 1.0) * v / (2.0 * N_DCT);
-#ifndef __SYNTHESIS__
-                    dct_t cos_val = dct_t(std::cos(math_val));
-#else
-                    dct_t cos_val = dct_t(hls::cos(math_val));
-#endif
-                    dct_t mult_product = pixel_val * cos_val;
-                    sum_col += mult_product;
-                }
-                
-                bool is_dc_col = (v == 0);
-                dct_t alpha_col = is_dc_col ? dct_t(0.70710678) : dct_t(1.0);
-                dct_t final_col_val = sum_col * alpha_col;
-                
-                int out_row_offset = v * N_DCT;
-                int out_idx_local = out_row_offset + c;
-                int out_idx_global = off_n + out_idx_local;
-                
-                inter3_coldct[out_idx_global] = final_col_val;
-            }
-        }
-
-        // ==========================================
-        // KERNEL 4: Hash (Mean + Binary Footprint)
-        // ==========================================
-        dct_t hash_sum = 0;
-        dct_t hash_count = 0;
-        
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
-                int row_offset = r * N_DCT;
-                int idx_local = row_offset + c;
-                int idx_global = off_n + idx_local;
-                
-                dct_t val = inter3_coldct[idx_global];
-                hash_sum += val;
-                
-                dct_t increment = dct_t(1.0);
-                hash_count += increment; 
-            }
-        }
-        
-        dct_t mean_val = hash_sum / hash_count; 
-        
-        hash_t hash_val = 0;
-        int bit_pos = 0;
-        
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
-                int row_offset = r * N_DCT;
-                int idx_local = row_offset + c;
-                int idx_global = off_n + idx_local;
-                
-                dct_t val = inter3_coldct[idx_global];
-                bool is_greater = (val > mean_val);
-                
-                if (is_greater) {
-                    hash_t bit_mask = ((hash_t)1 << bit_pos);
-                    hash_val = hash_val | bit_mask;
-                }
-                
-                int next_bit = bit_pos + 1;
-                bit_pos = next_bit;
-            }
-        }
-        
-        inter4_hash[img] = hash_val;
-
-        // ==========================================
-        // KERNEL 5: Ranker (Naive CS101 Sort)
-        // ==========================================
-        hash_t cur_hash = inter4_hash[img];
-        hash_t target = target_hash;
-        
-        int dist = 0;
-        int max_bits = 64;
-        
-        // Naive modulo bit extraction (Extremely slow in hardware)
-        for (int b = 0; b < max_bits; b++) {
-            int bit_cur = (int)(cur_hash % 2);
-            int bit_tgt = (int)(target % 2);
-            
-            if (bit_cur != bit_tgt) {
-                dist = dist + 1;
-            }
-            
-            cur_hash = cur_hash / 2;
-            target = target / 2;
-        }
-        
-        int current_dist = dist;
-        int last_idx = TOP_K - 1;
-        int max_topk_dist = out_topk[last_idx].distance;
-        
-        bool requires_insert = (current_dist < max_topk_dist);
-        
-        if (requires_insert) {
-            int insert_idx = last_idx;
-            
-            while (insert_idx > 0) {
-                int prev_idx = insert_idx - 1;
-                int prev_dist = out_topk[prev_idx].distance;
-                
-                if (current_dist < prev_dist) {
-                    insert_idx = prev_idx;
-                } else {
-                    break;
-                }
-            }
-            
-            for (int s = last_idx; s > 0; s--) {
-                bool should_shift = (s > insert_idx);
-                if (should_shift) {
-                    int src_idx = s - 1;
-                    TopKResult temp = out_topk[src_idx];
-                    out_topk[s] = temp;
-                }
-            }
-            
-            TopKResult new_entry;
-            new_entry.id = img;
-            new_entry.distance = current_dist;
-            
-            out_topk[insert_idx] = new_entry;
+    opt_t cos_lut[N_DCT][N_DCT];
+#pragma HLS array_partition variable=cos_lut complete dim=0
+    for (int c = 0; c < N_DCT; c++) {
+        for (int u = 0; u < N_DCT; u++) {
+            cos_lut[c][u] = opt_t(std::cos(3.14159265358979323846 * (2.0 * c + 1.0) * u / (2.0 * N_DCT)));
         }
     }
+
+#pragma HLS dataflow
+
+    hls::stream<opt_t> stream_k1_to_k2("s1");
+    hls::stream<opt_t> stream_k2_to_k3("s2");
+    hls::stream<opt_t> stream_k3_to_k4("s3");
+    hls::stream<hash_t> stream_k4_to_k5("s4");
+
+    k1_preprocess(input_rgb, stream_k1_to_k2);
+    k2_row_dct(stream_k1_to_k2, stream_k2_to_k3, cos_lut);
+    k3_col_dct(stream_k2_to_k3, stream_k3_to_k4, cos_lut);
+    k4_hash(stream_k3_to_k4, stream_k4_to_k5);
+    k5_ranker(stream_k4_to_k5, target_hash, out_topk);
 }
