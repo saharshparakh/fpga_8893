@@ -9,15 +9,37 @@
 #endif
 
 // ==========================================
-// Custom Types for 1024-bit AXI
+// Custom Types 
 // ==========================================
 typedef ap_uint<1024> wide_t;
 
-// SINGLE OPTIMIZATION: 18-bit precision type to force 1 DSP slice per multiplier
+// 18-bit precision type to force 1 DSP slice per multiplier
 typedef ap_fixed<18, 2, AP_RND, AP_SAT> dsp_coeff_t;
 
-// 18-bit internal pipeline type (8 integer bits for max ~127, 10 fractional bits)
+// 18-bit internal pipeline type (8 integer bits, 10 fractional bits)
 typedef ap_fixed<18, 8, AP_RND, AP_SAT> internal_dct_t;
+
+// ==========================================
+// TIGHT MATH: Pre-computed Cosine LUT
+// ==========================================
+const float cos_lut_f[16][16] = {
+    { 1.000000f,  0.995185f,  0.980785f,  0.956940f,  0.923880f,  0.881921f,  0.831470f,  0.773010f,  0.707107f,  0.634393f,  0.555570f,  0.471397f,  0.382683f,  0.290285f,  0.195090f,  0.098017f},
+    { 1.000000f,  0.956940f,  0.831470f,  0.634393f,  0.382683f,  0.098017f, -0.195090f, -0.471397f, -0.707107f, -0.881921f, -0.980785f, -0.995185f, -0.923880f, -0.773010f, -0.555570f, -0.290285f},
+    { 1.000000f,  0.881921f,  0.555570f,  0.098017f, -0.382683f, -0.773010f, -0.980785f, -0.956940f, -0.707107f, -0.290285f,  0.195090f,  0.634393f,  0.923880f,  0.995185f,  0.831470f,  0.471397f},
+    { 1.000000f,  0.773010f,  0.195090f, -0.471397f, -0.923880f, -0.956940f, -0.555570f,  0.098017f,  0.707107f,  0.995185f,  0.831470f,  0.290285f, -0.382683f, -0.881921f, -0.980785f, -0.634393f},
+    { 1.000000f,  0.634393f, -0.195090f, -0.881921f, -0.923880f, -0.290285f,  0.555570f,  0.995185f,  0.707107f, -0.098017f, -0.831470f, -0.956940f, -0.382683f,  0.471397f,  0.980785f,  0.773010f},
+    { 1.000000f,  0.471397f, -0.555570f, -0.995185f, -0.382683f,  0.634393f,  0.980785f,  0.290285f, -0.707107f, -0.956940f, -0.195090f,  0.773010f,  0.923880f,  0.098017f, -0.831470f, -0.881921f},
+    { 1.000000f,  0.290285f, -0.831470f, -0.773010f,  0.382683f,  0.995185f,  0.195090f, -0.881921f, -0.707107f,  0.471397f,  0.980785f,  0.098017f, -0.923880f, -0.634393f,  0.555570f,  0.956940f},
+    { 1.000000f,  0.098017f, -0.980785f, -0.290285f,  0.923880f,  0.471397f, -0.831470f, -0.634393f,  0.707107f,  0.773010f, -0.555570f, -0.881921f,  0.382683f,  0.956940f, -0.195090f, -0.995185f},
+    { 1.000000f, -0.098017f, -0.980785f,  0.290285f,  0.923880f, -0.471397f, -0.831470f,  0.634393f,  0.707107f, -0.773010f, -0.555570f,  0.881921f,  0.382683f, -0.956940f, -0.195090f,  0.995185f},
+    { 1.000000f, -0.290285f, -0.831470f,  0.773010f,  0.382683f, -0.995185f,  0.195090f,  0.881921f, -0.707107f, -0.471397f,  0.980785f, -0.098017f, -0.923880f,  0.634393f,  0.555570f, -0.956940f},
+    { 1.000000f, -0.471397f, -0.555570f,  0.995185f, -0.382683f, -0.634393f,  0.980785f, -0.290285f, -0.707107f,  0.956940f, -0.195090f, -0.773010f,  0.923880f, -0.098017f, -0.831470f,  0.881921f},
+    { 1.000000f, -0.634393f, -0.195090f,  0.881921f, -0.923880f,  0.290285f,  0.555570f, -0.995185f,  0.707107f,  0.098017f, -0.831470f,  0.956940f, -0.382683f, -0.471397f,  0.980785f, -0.773010f},
+    { 1.000000f, -0.773010f,  0.195090f,  0.471397f, -0.923880f,  0.956940f, -0.555570f, -0.098017f,  0.707107f, -0.995185f,  0.831470f, -0.290285f, -0.382683f,  0.881921f, -0.980785f,  0.634393f},
+    { 1.000000f, -0.881921f,  0.555570f, -0.098017f, -0.382683f,  0.773010f, -0.980785f,  0.956940f, -0.707107f,  0.290285f,  0.195090f, -0.634393f,  0.923880f, -0.995185f,  0.831470f, -0.471397f},
+    { 1.000000f, -0.956940f,  0.831470f, -0.634393f,  0.382683f, -0.098017f, -0.195090f,  0.471397f, -0.707107f,  0.881921f, -0.980785f,  0.995185f, -0.923880f,  0.773010f, -0.555570f,  0.290285f},
+    { 1.000000f, -0.995185f,  0.980785f, -0.956940f,  0.923880f, -0.881921f,  0.831470f, -0.773010f,  0.707107f, -0.634393f,  0.555570f, -0.471397f,  0.382683f, -0.290285f,  0.195090f, -0.098017f}
+};
 
 // ==========================================
 // Sub-Kernel Declarations
@@ -67,7 +89,7 @@ static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<inter
                         sum += (r_val + g_val + b_val);
                     }
                 }
-                out_stream.write(sum / box_area); 
+                out_stream.write(internal_dct_t(sum / box_area)); 
             }
         }
     }
@@ -93,21 +115,15 @@ static void kernel2_rowdct(hls::stream<internal_dct_t>& in_stream, hls::stream<i
         
         for (int r = 0; r < N_DCT; r++) {
             for (int u = 0; u < N_DCT; u++) {
-                dct_t sum = 0;
+                dct_t sum = 0; // FIXED: Reverted to 24-bit accumulator
                 for (int c = 0; c < N_DCT; c++) {
-                    float math_val = 3.14159265358979323846 * (2.0 * c + 1.0) * u / (2.0 * N_DCT);
-#ifndef __SYNTHESIS__
-                    dsp_coeff_t dynamic_cos = dsp_coeff_t(std::cos(math_val));
-#else
-                    dsp_coeff_t dynamic_cos = dsp_coeff_t(hls::cos(math_val));
-#endif
-                    sum += local_gray[r][c] * dynamic_cos;
+                    // NEW: Use pre-computed LUT
+                    sum += local_gray[r][c] * dsp_coeff_t(cos_lut_f[c][u]);
                 }
                 dct_t alpha = (u == 0) ? dct_t(0.70710678) : dct_t(1.0);
                 
-                // FIXED: Store the result in out_val before writing to the stream
                 dct_t out_val = sum * alpha;
-                out_stream.write(out_val);
+                out_stream.write(internal_dct_t(out_val));
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
@@ -142,21 +158,15 @@ static void kernel3_coldct(hls::stream<internal_dct_t>& in_stream, hls::stream<i
         // Perform Col-DCT math 
         for (int c = 0; c < N_DCT; c++) {
             for (int v = 0; v < N_DCT; v++) {
-                dct_t sum_col = 0;
+                dct_t sum_col = 0; // FIXED: Reverted to 24-bit accumulator
                 for (int r = 0; r < N_DCT; r++) {
-                    float math_val = 3.14159265358979323846 * (2.0 * r + 1.0) * v / (2.0 * N_DCT);
-#ifndef __SYNTHESIS__
-                    dsp_coeff_t dynamic_cos = dsp_coeff_t(std::cos(math_val));
-#else
-                    dsp_coeff_t dynamic_cos = dsp_coeff_t(hls::cos(math_val));
-#endif
-                    sum_col += local_rowdct[r][c] * dynamic_cos;
+                    // NEW: Use pre-computed LUT
+                    sum_col += local_rowdct[r][c] * dsp_coeff_t(cos_lut_f[r][v]);
                 }
                 dct_t alpha_col = (v == 0) ? dct_t(0.70710678) : dct_t(1.0);
                 
-                // FIXED: Store the result in out_val before writing to the stream
                 dct_t out_val = sum_col * alpha_col;
-                out_stream.write(out_val);
+                out_stream.write(internal_dct_t(out_val));
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
@@ -213,17 +223,20 @@ static void kernel5_ranker(hls::stream<hash_t>& in_stream, hash_t target_hash, T
 
     for (int img = 0; img < NUM_IMAGES; img++) {
         hash_t cur_hash = in_stream.read();
-        hash_t tgt_hash = target_hash;
         
+        // TIGHT MATH: Bitwise XOR finds all differences. 
+        // This is functionally identical to your previous (a%2 != b%2) check.
+        hash_t diff = cur_hash ^ target_hash;
         int current_dist = 0;
+
+        // Logic Check: Iterate through bits to count differences
         for (int b = 0; b < 64; b++) {
-            if ((cur_hash % 2) != (tgt_hash % 2)) {
+            if ((diff >> b) & 1) {
                 current_dist++;
             }
-            cur_hash = cur_hash / 2;
-            tgt_hash = tgt_hash / 2;
         }
         
+        // Ranking Logic
         int last_idx = TOP_K - 1;
         bool requires_insert = (current_dist < out_topk[last_idx].distance) || 
                                (current_dist == out_topk[last_idx].distance && img < out_topk[last_idx].id);
@@ -258,10 +271,10 @@ static void kernel5_ranker(hls::stream<hash_t>& in_stream, hash_t target_hash, T
 // ==========================================
 void top_kernel(
     const pixel_t input_rgb[NUM_IMAGES * IMG_W * IMG_H * 3],
-    dct_t inter1_gray[NUM_IMAGES * N_DCT * N_DCT],       // Kept in signature, decoupled in logic
-    dct_t inter2_rowdct[NUM_IMAGES * N_DCT * N_DCT],     // Kept in signature, decoupled in logic
-    dct_t inter3_coldct[NUM_IMAGES * N_DCT * N_DCT],     // Kept in signature, decoupled in logic
-    hash_t inter4_hash[NUM_IMAGES],                      // Kept in signature, decoupled in logic
+    dct_t inter1_gray[NUM_IMAGES * N_DCT * N_DCT],
+    dct_t inter2_rowdct[NUM_IMAGES * N_DCT * N_DCT],
+    dct_t inter3_coldct[NUM_IMAGES * N_DCT * N_DCT],
+    hash_t inter4_hash[NUM_IMAGES],
     hash_t target_hash,
     TopKResult out_topk[TOP_K] 
 ) {
@@ -276,9 +289,9 @@ void top_kernel(
 
     // Internal streams sized effectively for ping-pong buffering
     hls::stream<wide_t> raw_in("raw_in");
-    hls::stream<internal_dct_t> s_gray("s_gray");     // SHRUNK
-    hls::stream<internal_dct_t> s_rowdct("s_rowdct"); // SHRUNK
-    hls::stream<internal_dct_t> s_coldct("s_coldct"); // SHRUNK
+    hls::stream<internal_dct_t> s_gray("s_gray");
+    hls::stream<internal_dct_t> s_rowdct("s_rowdct");
+    hls::stream<internal_dct_t> s_coldct("s_coldct");
     hls::stream<hash_t> s_hash("s_hash");
 
     #pragma HLS stream variable=raw_in depth=32
