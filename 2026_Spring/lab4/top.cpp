@@ -1,6 +1,6 @@
 #include "dcl.h"
+#include <ap_int.h>
 #include <hls_stream.h>
-#include <ap_int.h> // FIXED: Required for HW-synthesizable popcount
 
 #ifndef __SYNTHESIS__
 #include <cmath>
@@ -9,225 +9,250 @@
 #endif
 
 // ==========================================
-// OPTIMIZED INTERNAL TYPES
+// Custom Types for 1024-bit AXI
 // ==========================================
-typedef ap_fixed<24, 12, AP_RND, AP_SAT> opt_t;
+typedef ap_uint<1024> wide_t;
 
 // ==========================================
-// KERNEL 1: Preprocess (RGB to Gray)
+// Sub-Kernel Declarations
 // ==========================================
-void k1_preprocess(const pixel_t input_rgb[], hls::stream<opt_t> &stream_out) {
-    opt_t w_r = opt_t(0.299 / 255.0);
-    opt_t w_g = opt_t(0.587 / 255.0);
-    opt_t w_b = opt_t(0.114 / 255.0);
-    opt_t inv_box = opt_t(1.0 / (BOX_SIZE * BOX_SIZE)); 
+static void read_input(const wide_t* in, hls::stream<wide_t>& out_stream) {
+    // 1024 bits = 128 bytes (pixels)
+    // Total pixels = NUM_IMAGES * 64 * 64 * 3 = 196608
+    // Total 1024-bit words = 196608 / 128 = 1536
+    int total_words = (NUM_IMAGES * IMG_W * IMG_H * 3) / 128;
+    
+    for (int i = 0; i < total_words; i++) {
+        #pragma HLS pipeline II=1
+        out_stream.write(in[i]);
+    }
+}
+
+static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<dct_t>& out_stream) {
+    dct_t w_r = dct_t(0.299 / 255.0);
+    dct_t w_g = dct_t(0.587 / 255.0);
+    dct_t w_b = dct_t(0.114 / 255.0);
+    dct_t box_area = dct_t(BOX_SIZE * BOX_SIZE);
 
     for (int img = 0; img < NUM_IMAGES; img++) {
-        int off_in = img * IMG_H * IMG_W * 3;
+        // Local BRAM buffer to hold exactly 1 image
+        pixel_t local_img[IMG_H * IMG_W * 3];
+        #pragma HLS bind_storage variable=local_img type=RAM_1P impl=BRAM
         
+        // Load 1 image from the wide stream (96 words per image)
+        for (int w = 0; w < (IMG_H * IMG_W * 3) / 128; w++) {
+            #pragma HLS pipeline II=1
+            wide_t word = in_stream.read();
+            for (int p = 0; p < 128; p++) {
+                local_img[w * 128 + p] = word(8 * p + 7, 8 * p);
+            }
+        }
+        
+        // Baseline processing from local BRAM instead of DDR
         for (int r = 0; r < N_DCT; r++) {
             for (int c = 0; c < N_DCT; c++) {
-                opt_t sum = 0;
-                
-                for (int b = 0; b < BOX_SIZE * BOX_SIZE; b++) {
-#pragma HLS pipeline II=1
-                    int br = b / BOX_SIZE;
-                    int bc = b % BOX_SIZE;
-                    int pr = r * BOX_SIZE + br;
-                    int pc = c * BOX_SIZE + bc;
-                    int idx = off_in + (pr * IMG_W + pc) * 3;
-                    
-                    sum += (opt_t(input_rgb[idx]) * w_r) + 
-                           (opt_t(input_rgb[idx+1]) * w_g) + 
-                           (opt_t(input_rgb[idx+2]) * w_b);
+                dct_t sum = 0;
+                for (int br = 0; br < BOX_SIZE; br++) {
+                    for (int bc = 0; bc < BOX_SIZE; bc++) {
+                        int idx = ((r * BOX_SIZE + br) * IMG_W + (c * BOX_SIZE + bc)) * 3;
+                        dct_t r_val = dct_t(local_img[idx + 0]) * w_r;
+                        dct_t g_val = dct_t(local_img[idx + 1]) * w_g;
+                        dct_t b_val = dct_t(local_img[idx + 2]) * w_b;
+                        sum += (r_val + g_val + b_val);
+                    }
                 }
-                stream_out.write(sum * inv_box); 
+                out_stream.write(sum / box_area); 
             }
         }
     }
 }
 
-// ==========================================
-// KERNEL 2: Row-DCT
-// ==========================================
-void k2_row_dct(hls::stream<opt_t> &stream_in, hls::stream<opt_t> &stream_out, const opt_t cos_lut[N_DCT][N_DCT]) {
+static void kernel2_rowdct(hls::stream<dct_t>& in_stream, hls::stream<dct_t>& out_stream) {
     for (int img = 0; img < NUM_IMAGES; img++) {
-        opt_t local_gray[N_DCT][N_DCT];
-#pragma HLS array_partition variable=local_gray complete dim=2 
-
-        for (int i = 0; i < N_DCT * N_DCT; i++) {
-#pragma HLS pipeline II=1
-            local_gray[i / N_DCT][i % N_DCT] = stream_in.read();
+        // Buffer the 16x16 frame locally
+        dct_t local_gray[N_DCT][N_DCT];
+        
+        for (int r = 0; r < N_DCT; r++) {
+            for (int c = 0; c < N_DCT; c++) {
+                #pragma HLS pipeline II=1
+                local_gray[r][c] = in_stream.read();
+            }
         }
-
+        
         for (int r = 0; r < N_DCT; r++) {
             for (int u = 0; u < N_DCT; u++) {
-#pragma HLS pipeline II=1
-                opt_t sum = 0;
+                dct_t sum = 0;
                 for (int c = 0; c < N_DCT; c++) {
-                    sum += local_gray[r][c] * cos_lut[c][u];
+                    float math_val = 3.14159265358979323846 * (2.0 * c + 1.0) * u / (2.0 * N_DCT);
+#ifndef __SYNTHESIS__
+                    dct_t dynamic_cos = dct_t(std::cos(math_val));
+#else
+                    dct_t dynamic_cos = dct_t(hls::cos(math_val));
+#endif
+                    sum += local_gray[r][c] * dynamic_cos;
                 }
-                opt_t alpha = (u == 0) ? opt_t(0.70710678) : opt_t(1.0);
-                stream_out.write(sum * alpha);
+                dct_t alpha = (u == 0) ? dct_t(0.70710678) : dct_t(1.0);
+                out_stream.write(sum * alpha);
             }
         }
     }
 }
 
-// ==========================================
-// KERNEL 3: Col-DCT
-// ==========================================
-void k3_col_dct(hls::stream<opt_t> &stream_in, hls::stream<opt_t> &stream_out, const opt_t cos_lut[N_DCT][N_DCT]) {
+static void kernel3_coldct(hls::stream<dct_t>& in_stream, hls::stream<dct_t>& out_stream) {
     for (int img = 0; img < NUM_IMAGES; img++) {
-        opt_t local_row_dct[N_DCT][N_DCT];
-#pragma HLS array_partition variable=local_row_dct complete dim=1 
-
-        for (int i = 0; i < N_DCT * N_DCT; i++) {
-#pragma HLS pipeline II=1
-            local_row_dct[i / N_DCT][i % N_DCT] = stream_in.read();
-        }
-
-        for (int v = 0; v < N_DCT; v++) {
-            for (int c = 0; c < N_DCT; c++) {
-#pragma HLS pipeline II=1
-                opt_t sum = 0;
-                for (int r = 0; r < N_DCT; r++) {
-                    sum += local_row_dct[r][c] * cos_lut[r][v];
-                }
-                opt_t alpha = (v == 0) ? opt_t(0.70710678) : opt_t(1.0);
-                stream_out.write(sum * alpha);
-            }
-        }
-    }
-}
-
-// ==========================================
-// KERNEL 4: Hash Generation
-// ==========================================
-void k4_hash(hls::stream<opt_t> &stream_in, hls::stream<hash_t> &stream_out) {
-    for (int img = 0; img < NUM_IMAGES; img++) {
-        opt_t top_corner[8][8];
-#pragma HLS array_partition variable=top_corner complete dim=0 
-        opt_t hash_sum = 0;
-
+        dct_t local_rowdct[N_DCT][N_DCT];
+        
+        // FIXED: Must read sequentially exactly how Kernel 2 wrote it (Row-Major)
         for (int r = 0; r < N_DCT; r++) {
             for (int c = 0; c < N_DCT; c++) {
-#pragma HLS pipeline II=1
-                opt_t val = stream_in.read();
-                if (r < 8 && c < 8) {
-                    top_corner[r][c] = val;
-                    hash_sum += val;
-                }
+                #pragma HLS pipeline II=1
+                local_rowdct[r][c] = in_stream.read();
             }
         }
-
-        opt_t inv_64 = opt_t(0.015625); 
-        opt_t mean = hash_sum * inv_64;
         
-        hash_t hash_val = 0;
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
-#pragma HLS pipeline II=1
-                if (top_corner[r][c] > mean) {
-                    hash_val |= ((hash_t)1 << (r * 8 + c));
+        // Perform Col-DCT math 
+        for (int c = 0; c < N_DCT; c++) {
+            for (int v = 0; v < N_DCT; v++) {
+                dct_t sum_col = 0;
+                for (int r = 0; r < N_DCT; r++) {
+                    float math_val = 3.14159265358979323846 * (2.0 * r + 1.0) * v / (2.0 * N_DCT);
+#ifndef __SYNTHESIS__
+                    dct_t dynamic_cos = dct_t(std::cos(math_val));
+#else
+                    dct_t dynamic_cos = dct_t(hls::cos(math_val));
+#endif
+                    sum_col += local_rowdct[r][c] * dynamic_cos;
                 }
+                dct_t alpha_col = (v == 0) ? dct_t(0.70710678) : dct_t(1.0);
+                
+                // Writes Column-Major (c outer, v inner)
+                out_stream.write(sum_col * alpha_col);
             }
         }
-        stream_out.write(hash_val);
     }
 }
 
-// ==========================================
-// KERNEL 5: Ranker (Systolic Sorter)
-// ==========================================
-void k5_ranker(hls::stream<hash_t> &stream_in, hash_t target_hash, TopKResult out_topk[TOP_K]) {
-    TopKResult local_topk[TOP_K];
-#pragma HLS array_partition variable=local_topk complete dim=1
+static void kernel4_hash(hls::stream<dct_t>& in_stream, hls::stream<hash_t>& out_stream) {
+    for (int img = 0; img < NUM_IMAGES; img++) {
+        dct_t local_coldct[N_DCT][N_DCT];
+        
+        // FIXED: Must read sequentially exactly how Kernel 3 wrote it (Column-Major)
+        for (int c = 0; c < N_DCT; c++) {
+            for (int v = 0; v < N_DCT; v++) {
+                #pragma HLS pipeline II=1
+                local_coldct[v][c] = in_stream.read();
+            }
+        }
+        
+        dct_t hash_sum = 0;
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                hash_sum += local_coldct[r][c];
+            }
+        }
+        
+        hash_t hash_val = 0;
+        int bit_pos = 0;
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                if (local_coldct[r][c] * dct_t(64.0) > hash_sum) {
+                    hash_val |= ((hash_t)1 << bit_pos);
+                }
+                bit_pos++;
+            }
+        }
+        out_stream.write(hash_val);
+    }
+}
 
+static void kernel5_ranker(hls::stream<hash_t>& in_stream, hash_t target_hash, TopKResult out_topk[TOP_K]) {
     for (int i = 0; i < TOP_K; i++) {
-#pragma HLS unroll
-        local_topk[i].id = -1;
-        local_topk[i].distance = 9999;
+        #pragma HLS unroll
+        out_topk[i].id = -1;
+        out_topk[i].distance = 9999;
     }
 
     for (int img = 0; img < NUM_IMAGES; img++) {
-#pragma HLS pipeline II=1
-        hash_t cur_hash = stream_in.read();
-        hash_t diff = cur_hash ^ target_hash;
+        hash_t cur_hash = in_stream.read();
+        hash_t tgt_hash = target_hash;
         
-        // FIXED: ap_uint for synthesizable bit counting
-        int dist = 0;
-        for(int b = 0; b < 64; b++) {
-#pragma HLS unroll
-            if((diff >> b) & 1) dist++;
+        int current_dist = 0;
+        for (int b = 0; b < 64; b++) {
+            if ((cur_hash % 2) != (tgt_hash % 2)) {
+                current_dist++;
+            }
+            cur_hash = cur_hash / 2;
+            tgt_hash = tgt_hash / 2;
         }
         
-        // FIXED: Tie-breaker logic mirroring the software model
-        bool is_better_last = (dist < local_topk[TOP_K-1].distance) || 
-                              (dist == local_topk[TOP_K-1].distance && img < local_topk[TOP_K-1].id);
-
-        if (is_better_last) {
-            int insert_idx = TOP_K - 1;
-            
-            for (int i = TOP_K - 2; i >= 0; i--) {
-                bool is_better_i = (dist < local_topk[i].distance) || 
-                                   (dist == local_topk[i].distance && img < local_topk[i].id);
-                if (is_better_i) insert_idx = i;
+        int last_idx = TOP_K - 1;
+        bool requires_insert = (current_dist < out_topk[last_idx].distance) || 
+                               (current_dist == out_topk[last_idx].distance && img < out_topk[last_idx].id);
+        
+        if (requires_insert) {
+            int insert_idx = last_idx;
+            while (insert_idx > 0) {
+                int prev_idx = insert_idx - 1;
+                int prev_dist = out_topk[prev_idx].distance;
+                bool is_better = (current_dist < prev_dist) || 
+                                 (current_dist == prev_dist && img < out_topk[prev_idx].id);
+                if (is_better) {
+                    insert_idx = prev_idx;
+                } else {
+                    break;
+                }
             }
             
-            for (int i = TOP_K - 1; i > 0; i--) {
-                if (i > insert_idx) local_topk[i] = local_topk[i-1];
+            for (int s = last_idx; s > 0; s--) {
+                if (s > insert_idx) {
+                    out_topk[s] = out_topk[s - 1];
+                }
             }
-            local_topk[insert_idx].id = img;
-            local_topk[insert_idx].distance = dist;
+            out_topk[insert_idx].id = img;
+            out_topk[insert_idx].distance = current_dist;
         }
-    }
-
-    for (int i = 0; i < TOP_K; i++) {
-#pragma HLS pipeline II=1
-        out_topk[i] = local_topk[i];
     }
 }
 
 // ==========================================
-// TOP LEVEL WRAPPER (The Interface)
+// Top Level Function
 // ==========================================
 void top_kernel(
     const pixel_t input_rgb[NUM_IMAGES * IMG_W * IMG_H * 3],
-    dct_t inter1_gray[NUM_IMAGES * N_DCT * N_DCT],    
-    dct_t inter2_rowdct[NUM_IMAGES * N_DCT * N_DCT],  
-    dct_t inter3_coldct[NUM_IMAGES * N_DCT * N_DCT],  
-    hash_t inter4_hash[NUM_IMAGES],                   
+    dct_t inter1_gray[NUM_IMAGES * N_DCT * N_DCT],       // Kept in signature, decoupled in logic
+    dct_t inter2_rowdct[NUM_IMAGES * N_DCT * N_DCT],     // Kept in signature, decoupled in logic
+    dct_t inter3_coldct[NUM_IMAGES * N_DCT * N_DCT],     // Kept in signature, decoupled in logic
+    hash_t inter4_hash[NUM_IMAGES],                      // Kept in signature, decoupled in logic
     hash_t target_hash,
     TopKResult out_topk[TOP_K] 
 ) {
-#pragma HLS interface m_axi port=input_rgb offset=slave bundle=gmem0
-#pragma HLS interface m_axi port=inter1_gray offset=slave bundle=gmem_unused
-#pragma HLS interface m_axi port=inter2_rowdct offset=slave bundle=gmem_unused
-#pragma HLS interface m_axi port=inter3_coldct offset=slave bundle=gmem_unused
-#pragma HLS interface m_axi port=inter4_hash offset=slave bundle=gmem_unused
+    // We only attach AXI to the data we actually use
+#pragma HLS interface m_axi port=input_rgb offset=slave bundle=gmem0 max_read_burst_length=32 num_read_outstanding=32 latency=64 max_widen_bitwidth=1024
 #pragma HLS interface m_axi port=out_topk offset=slave bundle=gmem1
 #pragma HLS interface s_axilite port=target_hash
 #pragma HLS interface s_axilite port=return
 
-    opt_t cos_lut[N_DCT][N_DCT];
-#pragma HLS array_partition variable=cos_lut complete dim=0
-    for (int c = 0; c < N_DCT; c++) {
-        for (int u = 0; u < N_DCT; u++) {
-            cos_lut[c][u] = opt_t(std::cos(3.14159265358979323846 * (2.0 * c + 1.0) * u / (2.0 * N_DCT)));
-        }
-    }
+    // Enable Canonical Dataflow for assembly-line execution
+    #pragma HLS dataflow
 
-#pragma HLS dataflow
+    // Internal streams sized effectively for ping-pong buffering
+    hls::stream<wide_t> raw_in("raw_in");
+    hls::stream<dct_t> s_gray("s_gray");
+    hls::stream<dct_t> s_rowdct("s_rowdct");
+    hls::stream<dct_t> s_coldct("s_coldct");
+    hls::stream<hash_t> s_hash("s_hash");
 
-    hls::stream<opt_t> stream_k1_to_k2("s1");
-    hls::stream<opt_t> stream_k2_to_k3("s2");
-    hls::stream<opt_t> stream_k3_to_k4("s3");
-    hls::stream<hash_t> stream_k4_to_k5("s4");
+    #pragma HLS stream variable=raw_in depth=32
+    #pragma HLS stream variable=s_gray depth=256
+    #pragma HLS stream variable=s_rowdct depth=256
+    #pragma HLS stream variable=s_coldct depth=256
+    #pragma HLS stream variable=s_hash depth=16
 
-    k1_preprocess(input_rgb, stream_k1_to_k2);
-    k2_row_dct(stream_k1_to_k2, stream_k2_to_k3, cos_lut);
-    k3_col_dct(stream_k2_to_k3, stream_k3_to_k4, cos_lut);
-    k4_hash(stream_k3_to_k4, stream_k4_to_k5);
-    k5_ranker(stream_k4_to_k5, target_hash, out_topk);
+    // Connect the sub-kernels
+    read_input((const wide_t*)input_rgb, raw_in);
+    kernel1_preprocess(raw_in, s_gray);
+    kernel2_rowdct(s_gray, s_rowdct);
+    kernel3_coldct(s_rowdct, s_coldct);
+    kernel4_hash(s_coldct, s_hash);
+    kernel5_ranker(s_hash, target_hash, out_topk);
 }
