@@ -13,6 +13,12 @@
 // ==========================================
 typedef ap_uint<1024> wide_t;
 
+// SINGLE OPTIMIZATION: 18-bit precision type to force 1 DSP slice per multiplier
+typedef ap_fixed<18, 2, AP_RND, AP_SAT> dsp_coeff_t;
+
+// 18-bit internal pipeline type (8 integer bits for max ~127, 10 fractional bits)
+typedef ap_fixed<18, 8, AP_RND, AP_SAT> internal_dct_t;
+
 // ==========================================
 // Sub-Kernel Declarations
 // ==========================================
@@ -28,7 +34,7 @@ static void read_input(const wide_t* in, hls::stream<wide_t>& out_stream) {
     }
 }
 
-static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<dct_t>& out_stream) {
+static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<internal_dct_t>& out_stream) {
     dct_t w_r = dct_t(0.299 / 255.0);
     dct_t w_g = dct_t(0.587 / 255.0);
     dct_t w_b = dct_t(0.114 / 255.0);
@@ -67,10 +73,16 @@ static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<dct_t
     }
 }
 
-static void kernel2_rowdct(hls::stream<dct_t>& in_stream, hls::stream<dct_t>& out_stream) {
+static void kernel2_rowdct(hls::stream<internal_dct_t>& in_stream, hls::stream<internal_dct_t>& out_stream) {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
+    static float max_hw_row = 0.0f; // TESTING CODE, PLEASE REMOVE!!!!!
+#endif // TESTING CODE, PLEASE REMOVE!!!!!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     for (int img = 0; img < NUM_IMAGES; img++) {
         // Buffer the 16x16 frame locally
-        dct_t local_gray[N_DCT][N_DCT];
+        internal_dct_t local_gray[N_DCT][N_DCT];
         
         for (int r = 0; r < N_DCT; r++) {
             for (int c = 0; c < N_DCT; c++) {
@@ -85,24 +97,41 @@ static void kernel2_rowdct(hls::stream<dct_t>& in_stream, hls::stream<dct_t>& ou
                 for (int c = 0; c < N_DCT; c++) {
                     float math_val = 3.14159265358979323846 * (2.0 * c + 1.0) * u / (2.0 * N_DCT);
 #ifndef __SYNTHESIS__
-                    dct_t dynamic_cos = dct_t(std::cos(math_val));
+                    dsp_coeff_t dynamic_cos = dsp_coeff_t(std::cos(math_val));
 #else
-                    dct_t dynamic_cos = dct_t(hls::cos(math_val));
+                    dsp_coeff_t dynamic_cos = dsp_coeff_t(hls::cos(math_val));
 #endif
                     sum += local_gray[r][c] * dynamic_cos;
                 }
                 dct_t alpha = (u == 0) ? dct_t(0.70710678) : dct_t(1.0);
-                out_stream.write(sum * alpha);
+                
+                // FIXED: Store the result in out_val before writing to the stream
+                dct_t out_val = sum * alpha;
+                out_stream.write(out_val);
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
+                float val = std::abs((float)out_val); // TESTING CODE, PLEASE REMOVE!!!!!
+                if (val > max_hw_row) max_hw_row = val; // TESTING CODE, PLEASE REMOVE!!!!!
+                if (img == NUM_IMAGES - 1 && r == N_DCT - 1 && u == N_DCT - 1) // TESTING CODE, PLEASE REMOVE!!!!!
+                    std::cout << ">> [HW SIM] Max Row Value: " << max_hw_row << std::endl; // TESTING CODE, PLEASE REMOVE!!!!!
+#endif // TESTING CODE, PLEASE REMOVE!!!!!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             }
         }
     }
 }
 
-static void kernel3_coldct(hls::stream<dct_t>& in_stream, hls::stream<dct_t>& out_stream) {
+static void kernel3_coldct(hls::stream<internal_dct_t>& in_stream, hls::stream<internal_dct_t>& out_stream) {
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
+    static float max_hw_col = 0.0f; // TESTING CODE, PLEASE REMOVE!!!!!
+#endif // TESTING CODE, PLEASE REMOVE!!!!!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     for (int img = 0; img < NUM_IMAGES; img++) {
-        dct_t local_rowdct[N_DCT][N_DCT];
+        internal_dct_t local_rowdct[N_DCT][N_DCT];
         
-        // FIXED: Must read sequentially exactly how Kernel 2 wrote it (Row-Major)
         for (int r = 0; r < N_DCT; r++) {
             for (int c = 0; c < N_DCT; c++) {
                 #pragma HLS pipeline II=1
@@ -117,24 +146,34 @@ static void kernel3_coldct(hls::stream<dct_t>& in_stream, hls::stream<dct_t>& ou
                 for (int r = 0; r < N_DCT; r++) {
                     float math_val = 3.14159265358979323846 * (2.0 * r + 1.0) * v / (2.0 * N_DCT);
 #ifndef __SYNTHESIS__
-                    dct_t dynamic_cos = dct_t(std::cos(math_val));
+                    dsp_coeff_t dynamic_cos = dsp_coeff_t(std::cos(math_val));
 #else
-                    dct_t dynamic_cos = dct_t(hls::cos(math_val));
+                    dsp_coeff_t dynamic_cos = dsp_coeff_t(hls::cos(math_val));
 #endif
                     sum_col += local_rowdct[r][c] * dynamic_cos;
                 }
                 dct_t alpha_col = (v == 0) ? dct_t(0.70710678) : dct_t(1.0);
                 
-                // Writes Column-Major (c outer, v inner)
-                out_stream.write(sum_col * alpha_col);
+                // FIXED: Store the result in out_val before writing to the stream
+                dct_t out_val = sum_col * alpha_col;
+                out_stream.write(out_val);
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
+                float val_c = std::abs((float)out_val); // TESTING CODE, PLEASE REMOVE!!!!!
+                if (val_c > max_hw_col) max_hw_col = val_c; // TESTING CODE, PLEASE REMOVE!!!!!
+                if (img == NUM_IMAGES - 1 && c == N_DCT - 1 && v == N_DCT - 1) // TESTING CODE, PLEASE REMOVE!!!!!
+                    std::cout << ">> [HW SIM] Max Col Value: " << max_hw_col << std::endl; // TESTING CODE, PLEASE REMOVE!!!!!
+#endif // TESTING CODE, PLEASE REMOVE!!!!!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             }
         }
     }
 }
 
-static void kernel4_hash(hls::stream<dct_t>& in_stream, hls::stream<hash_t>& out_stream) {
+static void kernel4_hash(hls::stream<internal_dct_t>& in_stream, hls::stream<hash_t>& out_stream) {
     for (int img = 0; img < NUM_IMAGES; img++) {
-        dct_t local_coldct[N_DCT][N_DCT];
+        internal_dct_t local_coldct[N_DCT][N_DCT];
         
         // FIXED: Must read sequentially exactly how Kernel 3 wrote it (Column-Major)
         for (int c = 0; c < N_DCT; c++) {
@@ -237,9 +276,9 @@ void top_kernel(
 
     // Internal streams sized effectively for ping-pong buffering
     hls::stream<wide_t> raw_in("raw_in");
-    hls::stream<dct_t> s_gray("s_gray");
-    hls::stream<dct_t> s_rowdct("s_rowdct");
-    hls::stream<dct_t> s_coldct("s_coldct");
+    hls::stream<internal_dct_t> s_gray("s_gray");     // SHRUNK
+    hls::stream<internal_dct_t> s_rowdct("s_rowdct"); // SHRUNK
+    hls::stream<internal_dct_t> s_coldct("s_coldct"); // SHRUNK
     hls::stream<hash_t> s_hash("s_hash");
 
     #pragma HLS stream variable=raw_in depth=32

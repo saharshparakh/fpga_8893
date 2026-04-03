@@ -12,6 +12,10 @@ void golden_kernel(
     hash_t target_hash,
     TopKResult out_topk[TOP_K]
 ) {
+        // TESTING
+        static float max_sw_row = 0.0f;
+        static float max_sw_col = 0.0f;
+    
     // initialize
     for(int i = 0; i < TOP_K; i++) {
         out_topk[i].id = -1;
@@ -64,6 +68,10 @@ void golden_kernel(
                 }
                 dct_t alpha = (u == 0) ? dct_t(0.70710678) : dct_t(1.0);
                 img_rowdct[r][u] = sum * alpha;
+
+                    // TESTING
+                    float val_row = std::abs((float)img_rowdct[r][u]);
+                    if (val_row > max_sw_row) max_sw_row = val_row;
             }
         }
         
@@ -77,6 +85,10 @@ void golden_kernel(
                 }
                 dct_t alpha = (v == 0) ? dct_t(0.70710678) : dct_t(1.0);
                 img_coldct[v][c] = sum * alpha;
+
+                // TESTING
+                float val_col = std::abs((float)img_coldct[v][c]);
+                if (val_col > max_sw_col) max_sw_col = val_col;
             }
         }
         
@@ -130,6 +142,12 @@ void golden_kernel(
             out_topk[insert_idx].id = img;
             out_topk[insert_idx].distance = dist;
         }
+
+            // TESTING
+            if (img == NUM_IMAGES - 1) {
+                std::cout << ">> [SW GOLDEN] Max Row Value: " << max_sw_row << std::endl;
+                std::cout << ">> [SW GOLDEN] Max Col Value: " << max_sw_col << std::endl;
+            }
     }
 }
 
