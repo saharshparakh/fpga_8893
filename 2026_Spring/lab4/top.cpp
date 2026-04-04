@@ -14,10 +14,10 @@
 typedef ap_uint<1024> wide_t;
 
 // 18-bit precision type to force 1 DSP slice per multiplier
-typedef ap_fixed<18, 2, AP_RND, AP_SAT> dsp_coeff_t;
+typedef ap_fixed<12, 2, AP_RND, AP_SAT> dsp_coeff_t;
 
 // 18-bit internal pipeline type (8 integer bits, 10 fractional bits)
-typedef ap_fixed<18, 8, AP_RND, AP_SAT> internal_dct_t;
+typedef ap_fixed<12, 6, AP_RND, AP_SAT> internal_dct_t;
 
 // ==========================================
 // TIGHT MATH: Pre-computed Cosine LUT
@@ -58,29 +58,29 @@ static void read_input(const wide_t* in, hls::stream<wide_t>& out_stream) {
 }
 
 static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<internal_dct_t>& out_stream) {
+    // TIGHT MATH: Cast to dct_t (24-bit) so the compiler bakes these constants in perfectly
     dct_t w_r = dct_t(0.299 / 255.0);
     dct_t w_g = dct_t(0.587 / 255.0);
     dct_t w_b = dct_t(0.114 / 255.0);
-    dct_t box_area = dct_t(BOX_SIZE * BOX_SIZE);
-
+    
     for (int img = 0; img < NUM_IMAGES; img++) {
-        // Local BRAM buffer to hold exactly 1 image
+        // STRUCTURAL: Leaving the 1D pixel array alone for now
         pixel_t local_img[IMG_H * IMG_W * 3];
         #pragma HLS bind_storage variable=local_img type=RAM_1P impl=BRAM
         
-        // Load 1 image from the wide stream (96 words per image)
+        // STRUCTURAL: Leaving the 1024-bit unpacking loop alone
         for (int w = 0; w < (IMG_H * IMG_W * 3) / 128; w++) {
             #pragma HLS pipeline II=1
             wide_t word = in_stream.read();
             for (int p = 0; p < 128; p++) {
+                int p8 = 8 * p;
                 local_img[w * 128 + p] = word(8 * p + 7, 8 * p);
             }
         }
         
-        // Baseline processing from local BRAM instead of DDR
         for (int r = 0; r < N_DCT; r++) {
             for (int c = 0; c < N_DCT; c++) {
-                dct_t sum = 0;
+                dct_t sum = 0; // 24-bit accumulator for safety
                 for (int br = 0; br < BOX_SIZE; br++) {
                     for (int bc = 0; bc < BOX_SIZE; bc++) {
                         int idx = ((r * BOX_SIZE + br) * IMG_W + (c * BOX_SIZE + bc)) * 3;
@@ -90,7 +90,10 @@ static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<inter
                         sum += (r_val + g_val + b_val);
                     }
                 }
-                out_stream.write(internal_dct_t(sum / box_area)); 
+                
+                // TIGHT MATH: Shift right by 4 is exactly (Sum / 16) but costs 0 logic.
+                // We cast to internal_dct_t here to lock the bit-width for the stream.
+                out_stream.write(internal_dct_t(sum >> 4));
             }
         }
     }
