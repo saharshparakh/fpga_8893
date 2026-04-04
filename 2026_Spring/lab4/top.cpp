@@ -21,24 +21,25 @@ typedef ap_fixed<18, 8, AP_RND, AP_SAT> internal_dct_t;
 
 // ==========================================
 // TIGHT MATH: Pre-computed Cosine LUT
+// NOTE: Column 0 (u=0 / v=0) is pre-scaled by alpha (0.707107)
 // ==========================================
 const float cos_lut_f[16][16] = {
-    { 1.000000f,  0.995185f,  0.980785f,  0.956940f,  0.923880f,  0.881921f,  0.831470f,  0.773010f,  0.707107f,  0.634393f,  0.555570f,  0.471397f,  0.382683f,  0.290285f,  0.195090f,  0.098017f},
-    { 1.000000f,  0.956940f,  0.831470f,  0.634393f,  0.382683f,  0.098017f, -0.195090f, -0.471397f, -0.707107f, -0.881921f, -0.980785f, -0.995185f, -0.923880f, -0.773010f, -0.555570f, -0.290285f},
-    { 1.000000f,  0.881921f,  0.555570f,  0.098017f, -0.382683f, -0.773010f, -0.980785f, -0.956940f, -0.707107f, -0.290285f,  0.195090f,  0.634393f,  0.923880f,  0.995185f,  0.831470f,  0.471397f},
-    { 1.000000f,  0.773010f,  0.195090f, -0.471397f, -0.923880f, -0.956940f, -0.555570f,  0.098017f,  0.707107f,  0.995185f,  0.831470f,  0.290285f, -0.382683f, -0.881921f, -0.980785f, -0.634393f},
-    { 1.000000f,  0.634393f, -0.195090f, -0.881921f, -0.923880f, -0.290285f,  0.555570f,  0.995185f,  0.707107f, -0.098017f, -0.831470f, -0.956940f, -0.382683f,  0.471397f,  0.980785f,  0.773010f},
-    { 1.000000f,  0.471397f, -0.555570f, -0.995185f, -0.382683f,  0.634393f,  0.980785f,  0.290285f, -0.707107f, -0.956940f, -0.195090f,  0.773010f,  0.923880f,  0.098017f, -0.831470f, -0.881921f},
-    { 1.000000f,  0.290285f, -0.831470f, -0.773010f,  0.382683f,  0.995185f,  0.195090f, -0.881921f, -0.707107f,  0.471397f,  0.980785f,  0.098017f, -0.923880f, -0.634393f,  0.555570f,  0.956940f},
-    { 1.000000f,  0.098017f, -0.980785f, -0.290285f,  0.923880f,  0.471397f, -0.831470f, -0.634393f,  0.707107f,  0.773010f, -0.555570f, -0.881921f,  0.382683f,  0.956940f, -0.195090f, -0.995185f},
-    { 1.000000f, -0.098017f, -0.980785f,  0.290285f,  0.923880f, -0.471397f, -0.831470f,  0.634393f,  0.707107f, -0.773010f, -0.555570f,  0.881921f,  0.382683f, -0.956940f, -0.195090f,  0.995185f},
-    { 1.000000f, -0.290285f, -0.831470f,  0.773010f,  0.382683f, -0.995185f,  0.195090f,  0.881921f, -0.707107f, -0.471397f,  0.980785f, -0.098017f, -0.923880f,  0.634393f,  0.555570f, -0.956940f},
-    { 1.000000f, -0.471397f, -0.555570f,  0.995185f, -0.382683f, -0.634393f,  0.980785f, -0.290285f, -0.707107f,  0.956940f, -0.195090f, -0.773010f,  0.923880f, -0.098017f, -0.831470f,  0.881921f},
-    { 1.000000f, -0.634393f, -0.195090f,  0.881921f, -0.923880f,  0.290285f,  0.555570f, -0.995185f,  0.707107f,  0.098017f, -0.831470f,  0.956940f, -0.382683f, -0.471397f,  0.980785f, -0.773010f},
-    { 1.000000f, -0.773010f,  0.195090f,  0.471397f, -0.923880f,  0.956940f, -0.555570f, -0.098017f,  0.707107f, -0.995185f,  0.831470f, -0.290285f, -0.382683f,  0.881921f, -0.980785f,  0.634393f},
-    { 1.000000f, -0.881921f,  0.555570f, -0.098017f, -0.382683f,  0.773010f, -0.980785f,  0.956940f, -0.707107f,  0.290285f,  0.195090f, -0.634393f,  0.923880f, -0.995185f,  0.831470f, -0.471397f},
-    { 1.000000f, -0.956940f,  0.831470f, -0.634393f,  0.382683f, -0.098017f, -0.195090f,  0.471397f, -0.707107f,  0.881921f, -0.980785f,  0.995185f, -0.923880f,  0.773010f, -0.555570f,  0.290285f},
-    { 1.000000f, -0.995185f,  0.980785f, -0.956940f,  0.923880f, -0.881921f,  0.831470f, -0.773010f,  0.707107f, -0.634393f,  0.555570f, -0.471397f,  0.382683f, -0.290285f,  0.195090f, -0.098017f}
+    { 0.707107f,  0.995185f,  0.980785f,  0.956940f,  0.923880f,  0.881921f,  0.831470f,  0.773010f,  0.707107f,  0.634393f,  0.555570f,  0.471397f,  0.382683f,  0.290285f,  0.195090f,  0.098017f},
+    { 0.707107f,  0.956940f,  0.831470f,  0.634393f,  0.382683f,  0.098017f, -0.195090f, -0.471397f, -0.707107f, -0.881921f, -0.980785f, -0.995185f, -0.923880f, -0.773010f, -0.555570f, -0.290285f},
+    { 0.707107f,  0.881921f,  0.555570f,  0.098017f, -0.382683f, -0.773010f, -0.980785f, -0.956940f, -0.707107f, -0.290285f,  0.195090f,  0.634393f,  0.923880f,  0.995185f,  0.831470f,  0.471397f},
+    { 0.707107f,  0.773010f,  0.195090f, -0.471397f, -0.923880f, -0.956940f, -0.555570f,  0.098017f,  0.707107f,  0.995185f,  0.831470f,  0.290285f, -0.382683f, -0.881921f, -0.980785f, -0.634393f},
+    { 0.707107f,  0.634393f, -0.195090f, -0.881921f, -0.923880f, -0.290285f,  0.555570f,  0.995185f,  0.707107f, -0.098017f, -0.831470f, -0.956940f, -0.382683f,  0.471397f,  0.980785f,  0.773010f},
+    { 0.707107f,  0.471397f, -0.555570f, -0.995185f, -0.382683f,  0.634393f,  0.980785f,  0.290285f, -0.707107f, -0.956940f, -0.195090f,  0.773010f,  0.923880f,  0.098017f, -0.831470f, -0.881921f},
+    { 0.707107f,  0.290285f, -0.831470f, -0.773010f,  0.382683f,  0.995185f,  0.195090f, -0.881921f, -0.707107f,  0.471397f,  0.980785f,  0.098017f, -0.923880f, -0.634393f,  0.555570f,  0.956940f},
+    { 0.707107f,  0.098017f, -0.980785f, -0.290285f,  0.923880f,  0.471397f, -0.831470f, -0.634393f,  0.707107f,  0.773010f, -0.555570f, -0.881921f,  0.382683f,  0.956940f, -0.195090f, -0.995185f},
+    { 0.707107f, -0.098017f, -0.980785f,  0.290285f,  0.923880f, -0.471397f, -0.831470f,  0.634393f,  0.707107f, -0.773010f, -0.555570f,  0.881921f,  0.382683f, -0.956940f, -0.195090f,  0.995185f},
+    { 0.707107f, -0.290285f, -0.831470f,  0.773010f,  0.382683f, -0.995185f,  0.195090f,  0.881921f, -0.707107f, -0.471397f,  0.980785f, -0.098017f, -0.923880f,  0.634393f,  0.555570f, -0.956940f},
+    { 0.707107f, -0.471397f, -0.555570f,  0.995185f, -0.382683f, -0.634393f,  0.980785f, -0.290285f, -0.707107f,  0.956940f, -0.195090f, -0.773010f,  0.923880f, -0.098017f, -0.831470f,  0.881921f},
+    { 0.707107f, -0.634393f, -0.195090f,  0.881921f, -0.923880f,  0.290285f,  0.555570f, -0.995185f,  0.707107f,  0.098017f, -0.831470f,  0.956940f, -0.382683f, -0.471397f,  0.980785f, -0.773010f},
+    { 0.707107f, -0.773010f,  0.195090f,  0.471397f, -0.923880f,  0.956940f, -0.555570f, -0.098017f,  0.707107f, -0.995185f,  0.831470f, -0.290285f, -0.382683f,  0.881921f, -0.980785f,  0.634393f},
+    { 0.707107f, -0.881921f,  0.555570f, -0.098017f, -0.382683f,  0.773010f, -0.980785f,  0.956940f, -0.707107f,  0.290285f,  0.195090f, -0.634393f,  0.923880f, -0.995185f,  0.831470f, -0.471397f},
+    { 0.707107f, -0.956940f,  0.831470f, -0.634393f,  0.382683f, -0.098017f, -0.195090f,  0.471397f, -0.707107f,  0.881921f, -0.980785f,  0.995185f, -0.923880f,  0.773010f, -0.555570f,  0.290285f},
+    { 0.707107f, -0.995185f,  0.980785f, -0.956940f,  0.923880f, -0.881921f,  0.831470f, -0.773010f,  0.707107f, -0.634393f,  0.555570f, -0.471397f,  0.382683f, -0.290285f,  0.195090f, -0.098017f}
 };
 
 // ==========================================
@@ -108,26 +109,24 @@ static void kernel2_rowdct(hls::stream<internal_dct_t>& in_stream, hls::stream<i
         
         for (int r = 0; r < N_DCT; r++) {
             for (int c = 0; c < N_DCT; c++) {
-                #pragma HLS pipeline II=1
                 local_gray[r][c] = in_stream.read();
             }
         }
         
         for (int r = 0; r < N_DCT; r++) {
             for (int u = 0; u < N_DCT; u++) {
-                dct_t sum = 0; // FIXED: Reverted to 24-bit accumulator
+                dct_t sum = 0; // 24-bit accumulator
                 for (int c = 0; c < N_DCT; c++) {
-                    // NEW: Use pre-computed LUT
+                    // TIGHT MATH: Pre-scaled LUT handles the alpha constant natively
                     sum += local_gray[r][c] * dsp_coeff_t(cos_lut_f[c][u]);
                 }
-                dct_t alpha = (u == 0) ? dct_t(0.70710678) : dct_t(1.0);
                 
-                dct_t out_val = sum * alpha;
-                out_stream.write(internal_dct_t(out_val));
+                // Truncate from 24-bit to 18-bit internal type on write.
+                out_stream.write(internal_dct_t(sum));
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
-                float val = std::abs((float)out_val); // TESTING CODE, PLEASE REMOVE!!!!!
+                float val = std::abs((float)sum); // TESTING CODE, PLEASE REMOVE!!!!!
                 if (val > max_hw_row) max_hw_row = val; // TESTING CODE, PLEASE REMOVE!!!!!
                 if (img == NUM_IMAGES - 1 && r == N_DCT - 1 && u == N_DCT - 1) // TESTING CODE, PLEASE REMOVE!!!!!
                     std::cout << ">> [HW SIM] Max Row Value: " << max_hw_row << std::endl; // TESTING CODE, PLEASE REMOVE!!!!!
@@ -150,7 +149,6 @@ static void kernel3_coldct(hls::stream<internal_dct_t>& in_stream, hls::stream<i
         
         for (int r = 0; r < N_DCT; r++) {
             for (int c = 0; c < N_DCT; c++) {
-                #pragma HLS pipeline II=1
                 local_rowdct[r][c] = in_stream.read();
             }
         }
@@ -158,19 +156,18 @@ static void kernel3_coldct(hls::stream<internal_dct_t>& in_stream, hls::stream<i
         // Perform Col-DCT math 
         for (int c = 0; c < N_DCT; c++) {
             for (int v = 0; v < N_DCT; v++) {
-                dct_t sum_col = 0; // FIXED: Reverted to 24-bit accumulator
+                dct_t sum_col = 0; // 24-bit accumulator
                 for (int r = 0; r < N_DCT; r++) {
-                    // NEW: Use pre-computed LUT
+                    // TIGHT MATH: Pre-scaled LUT handles the alpha constant natively
                     sum_col += local_rowdct[r][c] * dsp_coeff_t(cos_lut_f[r][v]);
                 }
-                dct_t alpha_col = (v == 0) ? dct_t(0.70710678) : dct_t(1.0);
                 
-                dct_t out_val = sum_col * alpha_col;
-                out_stream.write(internal_dct_t(out_val));
+                // Truncate from 24-bit to 18-bit internal type on write.
+                out_stream.write(internal_dct_t(sum_col));
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
-                float val_c = std::abs((float)out_val); // TESTING CODE, PLEASE REMOVE!!!!!
+                float val_c = std::abs((float)sum_col); // TESTING CODE, PLEASE REMOVE!!!!!
                 if (val_c > max_hw_col) max_hw_col = val_c; // TESTING CODE, PLEASE REMOVE!!!!!
                 if (img == NUM_IMAGES - 1 && c == N_DCT - 1 && v == N_DCT - 1) // TESTING CODE, PLEASE REMOVE!!!!!
                     std::cout << ">> [HW SIM] Max Col Value: " << max_hw_col << std::endl; // TESTING CODE, PLEASE REMOVE!!!!!
@@ -225,15 +222,14 @@ static void kernel5_ranker(hls::stream<hash_t>& in_stream, hash_t target_hash, T
         hash_t cur_hash = in_stream.read();
         
         // TIGHT MATH: Bitwise XOR finds all differences. 
-        // This is functionally identical to your previous (a%2 != b%2) check.
         hash_t diff = cur_hash ^ target_hash;
         int current_dist = 0;
 
-        // Logic Check: Iterate through bits to count differences
-        for (int b = 0; b < 64; b++) {
-            if ((diff >> b) & 1) {
-                current_dist++;
-            }
+        // TIGHT MATH: Kernighan's Algorithm for PopCount.
+        // Loops only as many times as there are differences, skipping all matching bits.
+        while (diff > 0) {
+            diff = diff & (diff - 1);
+            current_dist++;
         }
         
         // Ranking Logic
