@@ -49,14 +49,11 @@ const dsp_coeff_t cos_lut_f[16][16] = {
 /*
  * Kernel 0: Data Ingestion
  * Theory: Isolates the AXI memory-mapped interface from the compute logic.
- * By streaming 1024-bit ultra-wide words, we saturate the DDR memory bandwidth.
  */
 static void read_input(const wide_t* in, hls::stream<wide_t>& out_stream) {
     int total_words = (NUM_IMAGES * IMG_W * IMG_H * 3) / 128;
     
     // [ARCHITECTURE] AXI Burst Reader
-    // This loop consumes AXI data continuously, generating a clean internal 
-    // FIFO stream so downstream kernels aren't blocked by memory latency.
     for (int i = 0; i < total_words; i++) {
         #pragma HLS pipeline II=1
         out_stream.write(in[i]);
@@ -65,9 +62,7 @@ static void read_input(const wide_t* in, hls::stream<wide_t>& out_stream) {
 
 /*
  * Kernel 1: Grayscale Conversion & Spatial Downsampling
- * Theory: High-frequency spatial data is not robust for perceptual hashing. 
- * We downsample the image into a 16x16 grid by averaging 4x4 bounding boxes 
- * and convert RGB to grayscale (Y = 0.299R + 0.587G + 0.114B).
+ * Theory: Downsample to a 16x16 grid by averaging 4x4 bounding boxes and converting RGB to grayscale.
  */
 static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<internal_dct_t>& out_stream) {
     dct_t w_r = dct_t(0.299 / 255.0);
@@ -76,11 +71,15 @@ static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<inter
     
     for (int img = 0; img < NUM_IMAGES; img++) {
         pixel_t local_img[IMG_H * IMG_W * 3];
-        #pragma HLS bind_storage variable=local_img type=RAM_1P impl=BRAM
         
-        // [ARCHITECTURE] Wide-Stream Unpacker
-        // 1024-bit words arrive from DDR. This loop slices the wide word 
-        // into 128 individual 8-bit pixels and stores them in local BRAM.
+        // [ARCHITECTURE] Cyclic Array Partitioning
+        // We must calculate a 4x4 box (16 pixels * 3 channels = 48 values) in 1 clock cycle.
+        // A standard BRAM has 2 ports. By partitioning cyclically by 48, HLS creates 48 
+        // parallel BRAM banks, guaranteeing 48 separate physical read ports.
+        #pragma HLS bind_storage variable=local_img type=RAM_1P impl=BRAM
+        #pragma HLS array_partition variable=local_img cyclic factor=48 dim=1
+        
+        // Unpack 1024-bit words into BRAM.
         for (int w = 0; w < (IMG_H * IMG_W * 3) / 128; w++) {
             #pragma HLS pipeline II=1
             wide_t word = in_stream.read();
@@ -91,35 +90,34 @@ static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<inter
         }
         
         // [ALGORITHM] 4x4 Spatial Downsampling & Grayscale
-        // Iterates over the 16x16 target grid, mapping each grid point to a 4x4 
-        // block in the original image to compute the spatial average.
         for (int r = 0; r < N_DCT; r++) {
             for (int c = 0; c < N_DCT; c++) {
-                dct_t sum = 0; 
+                // [ARCHITECTURE] Pipelined Compute
+                // Pipelining the outer loop with II=1 forces the compiler to unroll 
+                // the inner 'br' and 'bc' loops completely. This builds exactly 48 multipliers
+                // and an adder tree to process a full 4x4 box every single clock cycle.
+                #pragma HLS pipeline II=1
                 
-                // [MATH] Index Hoisting
-                // Pre-calculates static base offsets outside the deepest loops 
-                // to eliminate redundant multiplications in hardware.
+                dct_t sum = 0; 
                 int base_row = r * BOX_SIZE;
                 int base_col = c * BOX_SIZE;                
                 
                 for (int br = 0; br < BOX_SIZE; br++) {
+                    #pragma HLS unroll
                     int row_offset = (base_row + br) * IMG_W;
                     int base_idx = (row_offset + base_col) * 3;
 
                     for (int bc = 0; bc < BOX_SIZE; bc++) {
+                        #pragma HLS unroll
                         int idx = base_idx + (bc * 3);
                         
+                        // Because of cyclic partitioning, these 48 reads happen simultaneously.
                         dct_t r_val = dct_t(local_img[idx + 0]) * w_r;
                         dct_t g_val = dct_t(local_img[idx + 1]) * w_g;
                         dct_t b_val = dct_t(local_img[idx + 2]) * w_b;
                         sum += (r_val + g_val + b_val);
                     }
                 }
-                
-                // [MATH] Zero-Cost Hardware Division
-                // We must divide the sum by 16 (the 4x4 box area) to find the average.
-                // Shifting right by 4 (>> 4) accomplishes this with 0 logic gates.
                 out_stream.write(internal_dct_t(sum >> 4));
             }
         }
@@ -128,48 +126,49 @@ static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<inter
 
 /*
  * Kernel 2: 1D Discrete Cosine Transform (Rows)
- * Theory: The 2D-DCT is mathematically separable. We first apply the 1D-DCT 
- * across the columns of each row.
+ * Theory: The 2D-DCT is mathematically separable. We apply the 1D-DCT across the rows.
  */
 static void kernel2_rowdct(hls::stream<internal_dct_t>& in_stream, hls::stream<internal_dct_t>& out_stream) {
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
-    static float max_hw_row = 0.0f; // TESTING CODE, PLEASE REMOVE!!!!!
-#endif // TESTING CODE, PLEASE REMOVE!!!!!
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#ifndef __SYNTHESIS__
+    static float max_hw_row = 0.0f; 
+#endif 
 
     for (int img = 0; img < NUM_IMAGES; img++) {
         internal_dct_t local_gray[N_DCT][N_DCT];
         
-        // [ARCHITECTURE] Local Data Caching
-        // Reads the 16x16 downsampled grayscale image from the stream into BRAM
-        // to allow for multi-pass data access required by matrix multiplication.
+        // [ARCHITECTURE] Complete Array Partitioning (Columns)
+        // To compute 1 frequency bin per cycle, we need all 16 pixels from a row simultaneously.
+        // We completely partition the 2nd dimension (columns) into 16 independent registers.
+        #pragma HLS array_partition variable=local_gray complete dim=2
+        
         for (int r = 0; r < N_DCT; r++) {
             for (int c = 0; c < N_DCT; c++) {
+                #pragma HLS pipeline II=1
                 local_gray[r][c] = in_stream.read();
             }
         }
         
         // [MATH] 1D Row DCT Matrix Multiplication
-        // For every row (r) and every frequency bin (u), compute the inner product
-        // of the spatial pixels (c) and the corresponding cosine wave basis.
         for (int r = 0; r < N_DCT; r++) {
             for (int u = 0; u < N_DCT; u++) {
+                // [ARCHITECTURE] Pipelined DSP Compute Engine
+                // By pipelining 'u', we force the 'c' loop to unroll, instantiating 16 DSP 
+                // slices to perform a full row inner-product in 1 clock cycle.
+                #pragma HLS pipeline II=1
                 dct_t sum = 0; 
+                
                 for (int c = 0; c < N_DCT; c++) {
-                    // Pre-scaled LUT handles the alpha constant (0.707) natively
+                    #pragma HLS unroll
                     sum += local_gray[r][c] * cos_lut_f[c][u];
                 }
                 out_stream.write(internal_dct_t(sum));
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
-                float val = std::abs((float)sum); // TESTING CODE, PLEASE REMOVE!!!!!
-                if (val > max_hw_row) max_hw_row = val; // TESTING CODE, PLEASE REMOVE!!!!!
-                if (img == NUM_IMAGES - 1 && r == N_DCT - 1 && u == N_DCT - 1) // TESTING CODE, PLEASE REMOVE!!!!!
-                    std::cout << ">> [HW SIM] Max Row Value: " << max_hw_row << std::endl; // TESTING CODE, PLEASE REMOVE!!!!!
-#endif // TESTING CODE, PLEASE REMOVE!!!!!
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#ifndef __SYNTHESIS__ 
+                float val = std::abs((float)sum); 
+                if (val > max_hw_row) max_hw_row = val; 
+                if (img == NUM_IMAGES - 1 && r == N_DCT - 1 && u == N_DCT - 1) 
+                    std::cout << ">> [HW SIM] Max Row Value: " << max_hw_row << std::endl; 
+#endif 
             }
         }
     }
@@ -177,44 +176,48 @@ static void kernel2_rowdct(hls::stream<internal_dct_t>& in_stream, hls::stream<i
 
 /*
  * Kernel 3: 1D Discrete Cosine Transform (Columns)
- * Theory: Completes the 2D-DCT by performing the identical 1D transform down 
- * the rows of each column. 
+ * Theory: Completes the 2D-DCT down the rows of each column. 
  */
 static void kernel3_coldct(hls::stream<internal_dct_t>& in_stream, hls::stream<internal_dct_t>& out_stream) {
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
-    static float max_hw_col = 0.0f; // TESTING CODE, PLEASE REMOVE!!!!!
-#endif // TESTING CODE, PLEASE REMOVE!!!!!
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#ifndef __SYNTHESIS__
+    static float max_hw_col = 0.0f; 
+#endif 
 
     for (int img = 0; img < NUM_IMAGES; img++) {
         internal_dct_t local_rowdct[N_DCT][N_DCT];
         
+        // [ARCHITECTURE] Complete Array Partitioning (Rows)
+        // To compute down a column in 1 cycle, we need all 16 rows simultaneously.
+        // We completely partition the 1st dimension (rows) into 16 independent registers.
+        #pragma HLS array_partition variable=local_rowdct complete dim=1
+        
         for (int r = 0; r < N_DCT; r++) {
             for (int c = 0; c < N_DCT; c++) {
+                #pragma HLS pipeline II=1
                 local_rowdct[r][c] = in_stream.read();
             }
         }
         
         // [MATH] 1D Column DCT Matrix Multiplication
-        // Symmetrical to K2, but computes down the rows (r) for each spatial column (c)
-        // and frequency bin (v) to finalize the 2D transformation.
         for (int c = 0; c < N_DCT; c++) {
             for (int v = 0; v < N_DCT; v++) {
+                // [ARCHITECTURE] Pipelined DSP Compute Engine
+                // Instantiates 16 DSP slices to multiply a column by the cosine basis in 1 cycle.
+                #pragma HLS pipeline II=1
                 dct_t sum_col = 0; 
+                
                 for (int r = 0; r < N_DCT; r++) {
+                    #pragma HLS unroll
                     sum_col += local_rowdct[r][c] * cos_lut_f[r][v];
                 }
                 out_stream.write(internal_dct_t(sum_col));
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#ifndef __SYNTHESIS__ // TESTING CODE, PLEASE REMOVE!!!!!
-                float val_c = std::abs((float)sum_col); // TESTING CODE, PLEASE REMOVE!!!!!
-                if (val_c > max_hw_col) max_hw_col = val_c; // TESTING CODE, PLEASE REMOVE!!!!!
-                if (img == NUM_IMAGES - 1 && c == N_DCT - 1 && v == N_DCT - 1) // TESTING CODE, PLEASE REMOVE!!!!!
-                    std::cout << ">> [HW SIM] Max Col Value: " << max_hw_col << std::endl; // TESTING CODE, PLEASE REMOVE!!!!!
-#endif // TESTING CODE, PLEASE REMOVE!!!!!
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#ifndef __SYNTHESIS__
+                float val_c = std::abs((float)sum_col); 
+                if (val_c > max_hw_col) max_hw_col = val_c;
+                if (img == NUM_IMAGES - 1 && c == N_DCT - 1 && v == N_DCT - 1) 
+                    std::cout << ">> [HW SIM] Max Col Value: " << max_hw_col << std::endl; 
+#endif 
             }
         }
     }
@@ -222,15 +225,16 @@ static void kernel3_coldct(hls::stream<internal_dct_t>& in_stream, hls::stream<i
 
 /*
  * Kernel 4: Frequency Thresholding & Fingerprint Hash
- * Theory: Extracts the top-left 8x8 matrix (low-frequency structural data). 
- * Averages these 64 bins, and thresholds them to build a 64-bit fingerprint.
+ * Theory: Extracts top-left 8x8 matrix, averages bins, thresholds to build 64-bit fingerprint.
  */
 static void kernel4_hash(hls::stream<internal_dct_t>& in_stream, hls::stream<hash_t>& out_stream) {
     for (int img = 0; img < NUM_IMAGES; img++) {
         internal_dct_t local_coldct[N_DCT][N_DCT];
         
-        // [ARCHITECTURE] Sequential Stream Ingestion
-        // Must read sequentially in Column-Major order precisely as K3 wrote it.
+        // [ARCHITECTURE] Complete Array Partitioning (Columns)
+        // Required so we can unroll the column accumulation in the next steps.
+        #pragma HLS array_partition variable=local_coldct complete dim=2
+        
         for (int c = 0; c < N_DCT; c++) {
             for (int v = 0; v < N_DCT; v++) {
                 #pragma HLS pipeline II=1
@@ -239,21 +243,26 @@ static void kernel4_hash(hls::stream<internal_dct_t>& in_stream, hls::stream<has
         }
         
         // [ALGORITHM] Low-Frequency DC/AC Averaging
-        // Sums only the top-left 8x8 block (lowest frequency components).
         dct_t hash_sum = 0;
         for (int r = 0; r < 8; r++) {
+            // [ARCHITECTURE] Pipelined Accumulation
+            // Takes 8 clock cycles to sum 64 items by unrolling the column reads.
+            #pragma HLS pipeline II=1
             for (int c = 0; c < 8; c++) {
+                #pragma HLS unroll
                 hash_sum += local_coldct[r][c];
             }
         }
         
         // [MATH] Thresholding and Fingerprint Construction
-        // If a frequency magnitude is greater than the average, flip its bit to 1.
-        // Division by 64 is replaced by a right shift of 6 (>> 6).
         hash_t hash_val = 0;
         int bit_pos = 0;
         for (int r = 0; r < 8; r++) {
+            // [ARCHITECTURE] Pipelined Thresholding
+            // Evaluates 8 comparisons per clock cycle. Completes fingerprint in 8 cycles.
+            #pragma HLS pipeline II=1
             for (int c = 0; c < 8; c++) {
+                #pragma HLS unroll
                 if (local_coldct[r][c] > (hash_sum >> 6)) {
                     hash_val |= ((hash_t)1 << bit_pos);
                 }
@@ -266,36 +275,29 @@ static void kernel4_hash(hls::stream<internal_dct_t>& in_stream, hls::stream<has
 
 /*
  * Kernel 5: Distance Ranking & Top-K Sorter
- * Theory: Computes the Hamming distance (number of differing bits) between the
- * current fingerprint and target fingerprint. Maintains a sorted array of the closest.
+ * Theory: Computes the Hamming distance and maintains a sorted array of the closest matches.
  */
 static void kernel5_ranker(hls::stream<hash_t>& in_stream, hash_t target_hash, TopKResult out_topk[TOP_K]) {
-    // Initialize the Top-K array with worst-case distance
     for (int i = 0; i < TOP_K; i++) {
         #pragma HLS unroll
         out_topk[i].id = -1;
         out_topk[i].distance = 9999;
     }
 
+    // Because this loop relies on highly variable data-dependent logic (Kernighan's while loop) 
+    // we intentionally do NOT apply II=1 pipelining here to avoid DRC failures. 
+    // The algorithmic math optimizations already reduced the latency of this kernel below the upstream bottlenecks.
     for (int img = 0; img < NUM_IMAGES; img++) {
         hash_t cur_hash = in_stream.read();
         
-        // [MATH] Bitwise Difference
-        // XOR isolates the differing bits between the two 64-bit hashes in 1 cycle.
         hash_t diff = cur_hash ^ target_hash;
         int current_dist = 0;
 
-        // [ALGORITHM] Kernighan's Bit Counting (PopCount)
-        // Mathematically snuffs out the rightmost '1' on every iteration.
-        // Bypasses the need to check '0' bits, drastically reducing loop cycles.
         while (diff > 0) {
             diff = diff & (diff - 1);
             current_dist++;
         }
         
-        // [ALGORITHM] Insertion Sort 
-        // Checks if the new image distance qualifies for the Top-K list.
-        // If so, shifts worse elements down and inserts the new winner.
         int last_idx = TOP_K - 1;
         bool requires_insert = (current_dist < out_topk[last_idx].distance) || 
                                (current_dist == out_topk[last_idx].distance && img < out_topk[last_idx].id);
