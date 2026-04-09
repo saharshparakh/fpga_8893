@@ -160,9 +160,9 @@ static void kernel2_rowdct(hls::stream<dct_vec8_t>& in_stream, hls::stream<dct_v
         }
         
         // [MATH] 1D Row DCT Matrix Multiplication
+        // [OPTIMIZATION] Balanced 4-level adder tree replaces 16-element chain,
+        // reducing pipeline depth and critical path without using DSP pragmas.
         for (int i = 0; i < 32; i++) {
-            // [ARCHITECTURE] 128-DSP Engine
-            // Processes 8 frequency bins per cycle across 16 pixels. 
             #pragma HLS pipeline II=1
             int r = i >> 1;
             int chunk = i & 1;
@@ -170,11 +170,35 @@ static void kernel2_rowdct(hls::stream<dct_vec8_t>& in_stream, hls::stream<dct_v
             for (int v = 0; v < 8; v++) {
                 #pragma HLS unroll
                 int u = chunk * 8 + v;
-                dct_t sum = 0; 
-                for (int c = 0; c < N_DCT; c++) {
-                    #pragma HLS unroll
-                    sum += local_gray[r][c] * cos_lut_f[c][u];
-                }
+                // Level 0: 16 parallel multiplies
+                dct_t p0  = local_gray[r][0]  * cos_lut_f[0][u];
+                dct_t p1  = local_gray[r][1]  * cos_lut_f[1][u];
+                dct_t p2  = local_gray[r][2]  * cos_lut_f[2][u];
+                dct_t p3  = local_gray[r][3]  * cos_lut_f[3][u];
+                dct_t p4  = local_gray[r][4]  * cos_lut_f[4][u];
+                dct_t p5  = local_gray[r][5]  * cos_lut_f[5][u];
+                dct_t p6  = local_gray[r][6]  * cos_lut_f[6][u];
+                dct_t p7  = local_gray[r][7]  * cos_lut_f[7][u];
+                dct_t p8  = local_gray[r][8]  * cos_lut_f[8][u];
+                dct_t p9  = local_gray[r][9]  * cos_lut_f[9][u];
+                dct_t p10 = local_gray[r][10] * cos_lut_f[10][u];
+                dct_t p11 = local_gray[r][11] * cos_lut_f[11][u];
+                dct_t p12 = local_gray[r][12] * cos_lut_f[12][u];
+                dct_t p13 = local_gray[r][13] * cos_lut_f[13][u];
+                dct_t p14 = local_gray[r][14] * cos_lut_f[14][u];
+                dct_t p15 = local_gray[r][15] * cos_lut_f[15][u];
+                // Level 1: 8 pair-wise additions (depth 1)
+                dct_t s1_0 = p0  + p1;   dct_t s1_1 = p2  + p3;
+                dct_t s1_2 = p4  + p5;   dct_t s1_3 = p6  + p7;
+                dct_t s1_4 = p8  + p9;   dct_t s1_5 = p10 + p11;
+                dct_t s1_6 = p12 + p13;  dct_t s1_7 = p14 + p15;
+                // Level 2: 4 additions (depth 2)
+                dct_t s2_0 = s1_0 + s1_1;  dct_t s2_1 = s1_2 + s1_3;
+                dct_t s2_2 = s1_4 + s1_5;  dct_t s2_3 = s1_6 + s1_7;
+                // Level 3: 2 additions (depth 3)
+                dct_t s3_0 = s2_0 + s2_1;  dct_t s3_1 = s2_2 + s2_3;
+                // Level 4: final sum (depth 4)
+                dct_t sum = s3_0 + s3_1;
                 out_vec.p[v] = internal_dct_t(sum);
             }
             out_stream.write(out_vec);
@@ -205,8 +229,8 @@ static void kernel3_coldct(hls::stream<dct_vec8_t>& in_stream, hls::stream<dct_v
         }
         
         // [MATH] 1D Column DCT Matrix Multiplication
+        // [OPTIMIZATION] Balanced 4-level adder tree replaces 16-element chain.
         for (int i = 0; i < 32; i++) {
-            // [ARCHITECTURE] 128-DSP Engine
             #pragma HLS pipeline II=1
             int c = i >> 1;     
             int v_blk = i & 1;  
@@ -215,11 +239,35 @@ static void kernel3_coldct(hls::stream<dct_vec8_t>& in_stream, hls::stream<dct_v
             for (int j = 0; j < 8; j++) {
                 #pragma HLS unroll
                 int v = v_blk * 8 + j;
-                dct_t sum_col = 0; 
-                for (int r = 0; r < N_DCT; r++) {
-                    #pragma HLS unroll
-                    sum_col += local_rowdct[r][c] * cos_lut_f[r][v];
-                }
+                // Level 0: 16 parallel multiplies
+                dct_t p0  = local_rowdct[0][c]  * cos_lut_f[0][v];
+                dct_t p1  = local_rowdct[1][c]  * cos_lut_f[1][v];
+                dct_t p2  = local_rowdct[2][c]  * cos_lut_f[2][v];
+                dct_t p3  = local_rowdct[3][c]  * cos_lut_f[3][v];
+                dct_t p4  = local_rowdct[4][c]  * cos_lut_f[4][v];
+                dct_t p5  = local_rowdct[5][c]  * cos_lut_f[5][v];
+                dct_t p6  = local_rowdct[6][c]  * cos_lut_f[6][v];
+                dct_t p7  = local_rowdct[7][c]  * cos_lut_f[7][v];
+                dct_t p8  = local_rowdct[8][c]  * cos_lut_f[8][v];
+                dct_t p9  = local_rowdct[9][c]  * cos_lut_f[9][v];
+                dct_t p10 = local_rowdct[10][c] * cos_lut_f[10][v];
+                dct_t p11 = local_rowdct[11][c] * cos_lut_f[11][v];
+                dct_t p12 = local_rowdct[12][c] * cos_lut_f[12][v];
+                dct_t p13 = local_rowdct[13][c] * cos_lut_f[13][v];
+                dct_t p14 = local_rowdct[14][c] * cos_lut_f[14][v];
+                dct_t p15 = local_rowdct[15][c] * cos_lut_f[15][v];
+                // Level 1: 8 pair-wise additions
+                dct_t s1_0 = p0  + p1;   dct_t s1_1 = p2  + p3;
+                dct_t s1_2 = p4  + p5;   dct_t s1_3 = p6  + p7;
+                dct_t s1_4 = p8  + p9;   dct_t s1_5 = p10 + p11;
+                dct_t s1_6 = p12 + p13;  dct_t s1_7 = p14 + p15;
+                // Level 2: 4 additions
+                dct_t s2_0 = s1_0 + s1_1;  dct_t s2_1 = s1_2 + s1_3;
+                dct_t s2_2 = s1_4 + s1_5;  dct_t s2_3 = s1_6 + s1_7;
+                // Level 3: 2 additions
+                dct_t s3_0 = s2_0 + s2_1;  dct_t s3_1 = s2_2 + s2_3;
+                // Level 4: final sum
+                dct_t sum_col = s3_0 + s3_1;
                 out_vec.p[j] = internal_dct_t(sum_col);
             }
             out_stream.write(out_vec);
@@ -250,26 +298,45 @@ static void kernel4_hash(hls::stream<dct_vec8_t>& in_stream, hls::stream<hash_t>
         }
         
         // [ALGORITHM] Low-Frequency DC/AC Averaging
-        // [ARCHITECTURE] Fully unrolled loops build a massive 64-input adder tree
-        // which HLS automatically pipelines into latency registers to easily beat 4ns timing.
-        dct_t hash_sum = 0;
+        // [OPTIMIZATION] Balanced 3-stage adder tree for 64-element hash_sum.
+        // Replaces 81-state sequential FSM with parallel reduction.
+        
+        // Stage A: Row-wise balanced sums (8 rows x 8 elements each)
+        dct_t row_sum[8];
+        #pragma HLS array_partition variable=row_sum complete
         for (int r = 0; r < 8; r++) {
             #pragma HLS unroll
-            for (int c = 0; c < 8; c++) {
-                #pragma HLS unroll
-                hash_sum += local_coldct[r][c];
-            }
+            dct_t a01 = dct_t(local_coldct[r][0]) + dct_t(local_coldct[r][1]);
+            dct_t a23 = dct_t(local_coldct[r][2]) + dct_t(local_coldct[r][3]);
+            dct_t a45 = dct_t(local_coldct[r][4]) + dct_t(local_coldct[r][5]);
+            dct_t a67 = dct_t(local_coldct[r][6]) + dct_t(local_coldct[r][7]);
+            dct_t b0 = a01 + a23;
+            dct_t b1 = a45 + a67;
+            row_sum[r] = b0 + b1;
         }
         
+        // Stage B: Cross-row balanced reduction
+        dct_t q0 = row_sum[0] + row_sum[1];
+        dct_t q1 = row_sum[2] + row_sum[3];
+        dct_t q2 = row_sum[4] + row_sum[5];
+        dct_t q3 = row_sum[6] + row_sum[7];
+        dct_t h0 = q0 + q1;
+        dct_t h1 = q2 + q3;
+        dct_t hash_sum = h0 + h1;
+        
+        // [MATH] Pre-compute mean threshold once (single division shared by 64 compares)
+        dct_t mean = hash_sum / dct_t(64);
+        
         // [MATH] Parallel Thresholding and Fingerprint Construction
+        // [OPTIMIZATION] Bit-level assignment eliminates |= dependency chain.
+        // Each bit is computed independently — no read-modify-write on hash_val.
         hash_t hash_val = 0;
         for (int r = 0; r < 8; r++) {
             #pragma HLS unroll
             for (int c = 0; c < 8; c++) {
                 #pragma HLS unroll
-                // Mathematically exact: (Sum / 64) 
-                if (local_coldct[r][c] > (hash_sum / dct_t(64))) {
-                    hash_val |= ((hash_t)1 << (r * 8 + c));
+                if (dct_t(local_coldct[r][c]) > mean) {
+                    hash_val[r * 8 + c] = 1;
                 }
             }
         }
