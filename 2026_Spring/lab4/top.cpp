@@ -68,70 +68,102 @@ static void read_input(const pixel_t* in, hls::stream<wide_t>& out_stream) {
  * Kernel 1.A: Ping-Pong Buffer Write Stage
  * [ARCHITECTURE] Local Band Unpacker: Reads 6 wide-words to buffer exactly 
  * enough pixel rows required to compute the next block of 4x4 spatial averages.
+ * 
+ * [TIMING] Manually unrolled to eliminate runtime address decode.
+ * The original `for(w=0;w<6)` loop created a single decoded 'w' signal
+ * that fanned out to all 768 partitioned FIFOs (922 loads post-synthesis).
+ * By using compile-time constant base addresses, each write group directly
+ * connects to only its 128 target FIFOs — no shared control signal needed.
  */
-static void kernel1_read_sw(hls::stream<wide_t>& in_stream, pixel_t local_band[768]) {
-    for (int w = 0; w < 6; w++) {
-        #pragma HLS pipeline II=1
-        wide_t word = in_stream.read();
-        for (int b = 0; b < 128; b++) {
-            #pragma HLS unroll
-            local_band[w * 128 + b] = word(b * 8 + 7, b * 8);
-        }
-    }
+/*
+ * Kernel 1.A: Pure State-Machine Read
+ * [TIMING FIX] Replaced the loop counter and the 768 slice assignments with 6 explicit 
+ * stream reads. HLS will synthesize this as a pure 6-state FSM (a simple shift register).
+ * Zero loop overhead, zero address decode fanout, zero AST explosion.
+ */
+static void kernel1_read_sw(hls::stream<wide_t>& in_stream, wide_t local_words[6]) {
+    // Pipeline off. We want exactly 6 sequential states to match the stream rate.
+    local_words[0] = in_stream.read();
+    local_words[1] = in_stream.read();
+    local_words[2] = in_stream.read();
+    local_words[3] = in_stream.read();
+    local_words[4] = in_stream.read();
+    local_words[5] = in_stream.read();
 }
 
 /*
- * Kernel 1.B: Ping-Pong Buffer Compute Stage
- * [ALGORITHM] 4x4 Spatial Downsampling & Grayscale Conversion.
- * Computes 8 blocks in parallel. Completely unrolled loops generate 192 MAC operations.
+ * Kernel 1.B: Direct-Wire Compute Stage
+ * [ARCHITECTURE] Hardwired Bit-Slicing. 
+ * Instead of routing from a 768-element RAM, we pull bits directly off the 1024-bit buses.
  */
-static void kernel1_compute_sw(pixel_t local_band[768], hls::stream<dct_vec8_t>& out_stream) {
+static void kernel1_compute_sw(wide_t local_words[6], hls::stream<dct_vec8_t>& out_stream) {
     dct_t w_r = dct_t(0.299 / 255.0);
     dct_t w_g = dct_t(0.587 / 255.0);
     dct_t w_b = dct_t(0.114 / 255.0);
+    
     for (int chunk = 0; chunk < 2; chunk++) {
         #pragma HLS pipeline II=1
         dct_vec8_t out_vec;
+        
         for (int v = 0; v < 8; v++) {
             #pragma HLS unroll
             int c = chunk * 8 + v;
-            dct_t sum = 0;
+            
+            dct_t row_sum[4];
+            #pragma HLS array_partition variable=row_sum complete
             
             for (int r = 0; r < 4; r++) {
                 #pragma HLS unroll
+                dct_t px_gray[4];
+                #pragma HLS array_partition variable=px_gray complete
+                
                 for (int px = 0; px < 4; px++) {
                     #pragma HLS unroll
                     int pixel_col = c * 4 + px;
+                    // 'idx' is a compile-time constant because all loops above are unrolled
                     int idx = r * 192 + pixel_col * 3;
                     
-                    // [MATH] Grayscale Luminosity
-                    dct_t r_val = dct_t(local_band[idx + 0]) * w_r;
-                    dct_t g_val = dct_t(local_band[idx + 1]) * w_g;
-                    dct_t b_val = dct_t(local_band[idx + 2]) * w_b;
-                    sum += (r_val + g_val + b_val);
+                    // [MATH] Compile-Time Static Routing
+                    // The compiler resolves these divisions and modulos instantly.
+                    // It physically wires the multiplier directly to these specific bits.
+                    int w_idx0 = (idx + 0) / 128;
+                    int bit_off0 = ((idx + 0) % 128) * 8;
+                    pixel_t r_val = local_words[w_idx0].range(bit_off0 + 7, bit_off0);
+
+                    int w_idx1 = (idx + 1) / 128;
+                    int bit_off1 = ((idx + 1) % 128) * 8;
+                    pixel_t g_val = local_words[w_idx1].range(bit_off1 + 7, bit_off1);
+
+                    int w_idx2 = (idx + 2) / 128;
+                    int bit_off2 = ((idx + 2) % 128) * 8;
+                    pixel_t b_val = local_words[w_idx2].range(bit_off2 + 7, bit_off2);
+
+                    px_gray[px] = dct_t(r_val) * w_r + dct_t(g_val) * w_g + dct_t(b_val) * w_b;
                 }
+                // Your balanced adder tree to save critical path slack
+                row_sum[r] = (px_gray[0] + px_gray[1]) + (px_gray[2] + px_gray[3]);
             }
-            // [MATH] Division by 16 replaced natively by C++ scaling fixed-point types
-            out_vec.p[v] = internal_dct_t(sum / dct_t(16));
+            dct_t total = (row_sum[0] + row_sum[1]) + (row_sum[2] + row_sum[3]);
+            out_vec.p[v] = internal_dct_t(total / dct_t(16));
         }
         out_stream.write(out_vec);
     }
 }
 
 /*
- * Kernel 1 Top: Grayscale Conversion & Spatial Downsampling
- * [ARCHITECTURE] Sub-Kernel Dataflow Ping-Pong
- * By instantiating read and compute inside a dataflow region, Vivado automatically 
- * synthesizes a Double-Buffer (Ping-Pong RAM). Reading and computing happen simultaneously.
+ * Kernel 1 Top
  */
 static void kernel1_preprocess(hls::stream<wide_t>& in_stream, hls::stream<dct_vec8_t>& out_stream) {
     for (int img = 0; img < NUM_IMAGES; img++) {
         for (int br_row = 0; br_row < N_DCT; br_row++) { 
             #pragma HLS dataflow
-            pixel_t local_band[768];
-            #pragma HLS array_partition variable=local_band complete dim=0
-            kernel1_read_sw(in_stream, local_band);
-            kernel1_compute_sw(local_band, out_stream);
+            
+            // Replaced 768 discrete 8-bit registers with exactly 6 massive 1024-bit registers
+            wide_t local_words[6];
+            #pragma HLS array_partition variable=local_words complete
+            
+            kernel1_read_sw(in_stream, local_words);
+            kernel1_compute_sw(local_words, out_stream);
         }
     }
 }
