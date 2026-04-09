@@ -17,7 +17,7 @@ config_schedule -enable_dsp_full_reg=true
 # FPGA part and clock configuration
 # default frequency is 100 MHz
 set_part {xczu3eg-sbva484-1-e}
-create_clock -period 12 -name default
+create_clock -period 3 -name default
 #create_clock -period 4 -name default
 
 # C synthesis for HLS design, generating RTL
